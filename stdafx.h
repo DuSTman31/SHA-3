@@ -5,7 +5,9 @@
 
 #pragma once
 
+#ifdef _MSC_VER
 #include "targetver.h"
+#endif //_MSC_VER
 
 #include <cstdio>
 #include <tchar.h>
