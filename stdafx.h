@@ -10,7 +10,6 @@
 #endif //_MSC_VER
 
 #include <cstdio>
-#include <tchar.h>
 #include <cstdint>
 #include <cstring>
 
