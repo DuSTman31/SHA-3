@@ -5,7 +5,7 @@
 
 // Constants of the Keccak algorithm.
 
-uint64_t RC[] = {
+const uint64_t RC[] = {
 	0x0000000000000001L, 0x0000000000008082L, 0x800000000000808aL,
 	0x8000000080008000L, 0x000000000000808bL, 0x0000000080000001L,
 	0x8000000080008081L, 0x8000000000008009L, 0x000000000000008aL,
@@ -16,7 +16,7 @@ uint64_t RC[] = {
 	0x8000000000008080L, 0x0000000080000001L, 0x8000000080008008L
 };
 
-int R[] = {
+const int R[] = {
 	0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43,
 	25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14
 };
@@ -215,26 +215,31 @@ inline int index(int x, int y)
 	return index(x) + 5 * index(y);
 }
 
+struct keccakfState
+{
+	uint64_t B[25];
+	uint64_t C[5];
+	uint64_t D[5];
+};
+
 
 // Hash function proper. 
 void keccakf(keccakState *state)
 {
 	uint64_t *A = state->A;
-	uint64_t *B = new uint64_t[25];
-	uint64_t *C = new uint64_t[5];
-	uint64_t *D = new uint64_t[5];
+	keccakfState kState;
 	for (int n = 0; n < 24; n++) 
 	{
 		for (int x = 0; x < 5; x++) 
 		{
-			C[x] = A[index(x, 0)] ^ A[index(x, 1)] ^ A[index(x, 2)] ^ A[index(x, 3)] ^ A[index(x, 4)];
+			kState.C[x] = A[index(x, 0)] ^ A[index(x, 1)] ^ A[index(x, 2)] ^ A[index(x, 3)] ^ A[index(x, 4)];
 		}
 		for (int x = 0; x < 5; x++) 
 		{
-			D[x] = C[index(x - 1)] ^ rotateLeft(C[index(x + 1)], 1);
+			kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 			for (int y = 0; y < 5; y++) 
 			{
-				A[index(x, y)] ^= D[x];
+				A[index(x, y)] ^= kState.D[x];
 			}
 		}
 		for (int x = 0; x < 5; x++) 
@@ -242,7 +247,7 @@ void keccakf(keccakState *state)
 			for (int y = 0; y < 5; y++) 
 			{
 				int i = index(x, y);
-				B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+				kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
 			}
 		}
 		for (int x = 0; x < 5; x++) 
@@ -250,7 +255,7 @@ void keccakf(keccakState *state)
 			for (int y = 0; y < 5; y++) 
 			{
 				int i = index(x, y);
-				A[i] = B[i] ^ (~B[index(x + 1, y)] & B[index(x + 2, y)]);
+				A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 			}
 		}
 		A[0] ^= RC[n];
@@ -261,7 +266,7 @@ void keccakf(keccakState *state)
 
 int main(int argc, char* argv[])
 {
-	unsigned int hashSize = 256;
+	unsigned int hashSize = 512;
 	keccakState *st = keccakCreate(hashSize);
 
 	FILE *fHand = fopen("test.txt", "rb");
@@ -277,7 +282,7 @@ int main(int argc, char* argv[])
 	fread(msg, 1, fileSize, fHand);
 	fclose(fHand);
 
-	keccakUpdate((uint8_t*)msg, 0, 0, st);
+	keccakUpdate((uint8_t*)msg, 0, fileSize, st);
 
 	unsigned char *op = sha3Digest(st);
 
