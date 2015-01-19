@@ -246,8 +246,6 @@ void keccakf(keccakState *state)
 	}
 }
 
-// Test driver. Reads in test.txt and outputs the SHA-3-512 hash.
-
 int main(int argc, char* argv[])
 {
 	parseCommandLine(argc, argv);

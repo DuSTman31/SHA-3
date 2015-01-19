@@ -4,8 +4,8 @@
 
 unsigned int hashType = 0;
 unsigned int hashWidth = 512;
-unsigned int sha3widths[] = {256, 512, 0};
-unsigned int keccakwidths[] = {256, 512, 0};
+unsigned int sha3widths[] = {224, 256, 384, 512, 0};
+unsigned int keccakwidths[] = {224, 256, 384, 512, 0};
 
 
 int doFile(const char *fileName)
@@ -33,12 +33,13 @@ int doFile(const char *fileName)
 		delete[] msg;
 		unsigned char *op = sha3Digest(st);
 
-		printf("Output: ");
+		printf("SHA-3: ");
 		for(unsigned int i=0 ; i!=(hashSize/8) ; i++)
 		{
 			printf("%.2x", *(op++));
 		}
 		printf("\n");
+		return 1;
 	}
 	else if (hashType==1)
 	{
@@ -63,12 +64,124 @@ int doFile(const char *fileName)
 		delete[] msg;
 		unsigned char *op = keccakDigest(st);
 
-		printf("Output: ");
+		printf("Keccak: ");
 		for(unsigned int i=0 ; i!=(hashSize/8) ; i++)
 		{
 			printf("%.2x", *(op++));
 		}
-		printf("\n");	
+		printf("\n");
+		return 1;
+	}
+}
+
+int parseAlg(const char *param, const unsigned int pSize)
+{
+	unsigned int index = 0;
+	if(param[index] == '=')
+	{
+		index++;
+	}
+
+	if(index+1 == pSize)
+	{
+		const char algInitial = param[index];
+		if(algInitial == 'k')
+		{
+			hashType = 1;
+			return 1;
+		}
+		else if(algInitial == 's')
+		{
+			hashType = 0;
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+int parseWidth(const char *param, const unsigned int pSize)
+{
+	unsigned int index = 0;
+	if(param[index] == '=')
+	{
+		index++;
+	}
+
+	if(index+3 == pSize)
+	{
+		if(strncmp(&param[index], "224", pSize-index)==0)
+		{
+			hashWidth = 224;
+			return 1;
+		}
+		else if(strncmp(&param[index], "256", pSize-index)==0)
+		{
+			hashWidth = 256;
+			return 1;	
+		}
+		else if(strncmp(&param[index], "384", pSize-index)==0)
+		{
+			hashWidth = 384;
+			return 1;
+		}
+		else if(strncmp(&param[index], "512", pSize-index)==0)
+		{
+			hashWidth = 512;
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+
+}
+
+int parseOption(const char *param, const unsigned int pSize)
+{
+	unsigned int index = 1;
+
+	if(index!=pSize)
+	{
+		const char commandInitial = param[index];
+		if(commandInitial=='h')
+		{
+			if((index+1) == pSize)
+			{
+				// Usage
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		else if(commandInitial=='a')
+		{
+			return parseAlg(&param[index+1], pSize-(index+1));	
+		}
+		else if(commandInitial=='w')
+		{
+			return parseWidth(&param[index+1], pSize-(index+1));
+		}
+		else
+		{
+			return 0;	
+		}
+	}
+	else 
+	{
+		return 0;
 	}
 }
 
@@ -78,6 +191,8 @@ void parseParameter(const char *param)
 	unsigned int paramSize = 0;
 
 	paramSize = strlen(param);
+
+	printf("|%s|\n", param);
 
 	// Eat leading whitespace
 	for(unsigned int i=index ; i!=paramSize ; i++)
@@ -98,7 +213,7 @@ void parseParameter(const char *param)
 		}
 		else
 		{
-				
+			parseOption(&param[index], paramSize-index);	
 		}
 	}
 }
