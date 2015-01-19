@@ -1,5 +1,6 @@
 #include "stdafx.h"
-
+#include "Keccak.h"
+#include "CommandParser.h"
 
 #include "Endian.h"
 
@@ -22,16 +23,8 @@ const int R[] = {
 };
 
 
-// State structure
-struct keccakState
-{
-	uint64_t *A;
-	unsigned int blockLen;
-	uint8_t *buffer;
-	unsigned int bufferLen;
-	int length;
-};
-
+inline int index(int x);
+inline int index(int x, int y);
 
 // Function to create the state structure for keccak application, of size length
 //   (where length is the number of bits in the hash divided by 8. 
@@ -51,15 +44,6 @@ struct keccakState *keccakCreate(int length)
 	return state;
 }
 
-inline int index(int x);
-inline int index(int x, int y);
-void keccakProcessBuffer(struct keccakState *state);
-void keccakUpdate(uint8_t *input, int off, int len);
-unsigned char *keccakDigest(keccakState *state);
-unsigned char *sha3Digest(keccakState *state);
-void keccakAddPadding(keccakState *state);
-void keccakf(keccakState *state);
-void sha3AddPadding(keccakState *state);
 
 void keccakReset(keccakState *state)
 {
@@ -266,32 +250,8 @@ void keccakf(keccakState *state)
 
 int main(int argc, char* argv[])
 {
-	unsigned int hashSize = 512;
-	keccakState *st = keccakCreate(hashSize);
+	parseCommandLine(argc, argv);
 
-	FILE *fHand = fopen("test.txt", "rb");
-	if(!fHand)
-	{
-		puts("Unable to open input file. \n");
-		return 0;
-	}
-	fseek(fHand, 0, SEEK_END);
-	unsigned int fileSize = ftell(fHand);
-	fseek(fHand, 0, SEEK_SET);
-	char *msg = new char[fileSize];
-	fread(msg, 1, fileSize, fHand);
-	fclose(fHand);
-
-	keccakUpdate((uint8_t*)msg, 0, fileSize, st);
-
-	unsigned char *op = sha3Digest(st);
-
-	printf("Output: ");
-	for(unsigned int i=0 ; i!=(hashSize/8) ; i++)
-	{
-		printf("%.2x", *(op++));
-	}
-	printf("\n");
 	return 0;
 }
 
