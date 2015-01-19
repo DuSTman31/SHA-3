@@ -33,7 +33,7 @@ int doFile(const char *fileName)
 		delete[] msg;
 		unsigned char *op = sha3Digest(st);
 
-		printf("SHA-3: ");
+		printf("SHA-3-%u %s: ", hashSize, fileName);
 		for(unsigned int i=0 ; i!=(hashSize/8) ; i++)
 		{
 			printf("%.2x", *(op++));
@@ -64,7 +64,7 @@ int doFile(const char *fileName)
 		delete[] msg;
 		unsigned char *op = keccakDigest(st);
 
-		printf("Keccak: ");
+		printf("Keccak-%u %s: ", hashSize, fileName);
 		for(unsigned int i=0 ; i!=(hashSize/8) ; i++)
 		{
 			printf("%.2x", *(op++));
@@ -191,8 +191,6 @@ void parseParameter(const char *param)
 	unsigned int paramSize = 0;
 
 	paramSize = strlen(param);
-
-	printf("|%s|\n", param);
 
 	// Eat leading whitespace
 	for(unsigned int i=index ; i!=paramSize ; i++)
