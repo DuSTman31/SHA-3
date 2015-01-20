@@ -2,6 +2,8 @@
 
 int doFile(const char *fileName);
 
+void usage();
+
 int parseAlg(const char *param, const unsigned int pSize);
 
 int parseWidth(const char *param, const unsigned int pSize);

@@ -74,6 +74,37 @@ int doFile(const char *fileName)
 	}
 }
 
+
+void usage()
+{
+	puts("\n\nUsage: sha3sum [command]* file*\n"
+	"\n"
+	" where command is an optional parameter that can set either the algorithm, as\n"
+	" there is a slight difference between the bare keccak function and the SHA-3\n"
+	" variant.\n"
+	"\n" 
+	" Algorithm \n"
+	"\n" 
+	" -a=s   :  Set algorithm to SHA-3 (default).\n"
+	" -a=k   :  Set algotithm to Keccak.\n"
+	"\n" 
+	" Size\n"
+	" \n"
+	" -w=224 :  Set width to 224 bits.\n"
+	" -w=256 :  Set width to 256 bits.\n"
+	" -w=384 :  Set width to 384 bits.\n"
+	" -w=512 :  Set width to 512 bits (default).\n"
+	 "\n"
+	"Any number of files can be specified. Files will be processed with the most\n"
+	"recently specified options - for example:\n"
+	"\n"
+	"  sha3sum test.txt -a=k -w=384 test.txt -a=s -w=256 text.txt\n"
+	"\n"
+	"will hash \"test.txt\" three times - First with 512-bit SHA-3, then with 384-bit\n"
+	"keccak, then finally with 256-bit SHA-3.\n");
+
+}
+
 int parseAlg(const char *param, const unsigned int pSize)
 {
 	unsigned int index = 0;
@@ -159,7 +190,7 @@ int parseOption(const char *param, const unsigned int pSize)
 		{
 			if((index+1) == pSize)
 			{
-				// Usage
+				usage();
 			}
 			else
 			{
