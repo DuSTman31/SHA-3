@@ -72,6 +72,7 @@ int doFile(const char *fileName)
 		printf("\n");
 		return 1;
 	}
+	return 0;
 }
 
 
@@ -191,6 +192,7 @@ int parseOption(const char *param, const unsigned int pSize)
 			if((index+1) == pSize)
 			{
 				usage();
+				return 0;
 			}
 			else
 			{
