@@ -34,7 +34,7 @@ int doFile(const char *fileName)
 		unsigned char *op = sha3Digest(st);
 
 		printf("SHA-3-%u %s: ", hashSize, fileName);
-		for(unsigned int i=0 ; i!=(hashSize/8) ; i++)
+		for(unsigned int i = 0 ; i != (hashSize/8) ; i++)
 		{
 			printf("%.2x", *(op++));
 		}
@@ -65,7 +65,7 @@ int doFile(const char *fileName)
 		unsigned char *op = keccakDigest(st);
 
 		printf("Keccak-%u %s: ", hashSize, fileName);
-		for(unsigned int i=0 ; i!=(hashSize/8) ; i++)
+		for(unsigned int i = 0 ; i != (hashSize/8) ; i++)
 		{
 			printf("%.2x", *(op++));
 		}
@@ -114,7 +114,7 @@ int parseAlg(const char *param, const unsigned int pSize)
 		index++;
 	}
 
-	if(index+1 == pSize)
+	if(index + 1 == pSize)
 	{
 		const char algInitial = param[index];
 		if(algInitial == 'k')
@@ -184,12 +184,12 @@ int parseOption(const char *param, const unsigned int pSize)
 {
 	unsigned int index = 1;
 
-	if(index!=pSize)
+	if(index != pSize)
 	{
 		const char commandInitial = param[index];
-		if(commandInitial=='h')
+		if(commandInitial == 'h')
 		{
-			if((index+1) == pSize)
+			if((index + 1) == pSize)
 			{
 				usage();
 				return 0;
@@ -199,11 +199,11 @@ int parseOption(const char *param, const unsigned int pSize)
 				return 0;
 			}
 		}
-		else if(commandInitial=='a')
+		else if(commandInitial == 'a')
 		{
 			return parseAlg(&param[index+1], pSize-(index+1));	
 		}
-		else if(commandInitial=='w')
+		else if(commandInitial == 'w')
 		{
 			return parseWidth(&param[index+1], pSize-(index+1));
 		}
@@ -226,19 +226,19 @@ void parseParameter(const char *param)
 	paramSize = strlen(param);
 
 	// Eat leading whitespace
-	for(unsigned int i=index ; i!=paramSize ; i++)
+	for(unsigned int i = index ; i != paramSize ; i++)
 	{
 		const char posI = param[i];
-		if((posI!=' ') && (posI!='\t'))
+		if((posI != ' ') && (posI != '\t'))
 		{
 			index = i;
 			break;
 		}
 	}
 
-	if(index!=paramSize)
+	if(index != paramSize)
 	{
-		if(param[index]!='-')
+		if(param[index] != '-')
 		{
 			doFile(&param[index]);
 		}
@@ -251,9 +251,9 @@ void parseParameter(const char *param)
 
 void parseCommandLine(const int argc, char* argv[])
 {
-	if(argc>1)
+	if(argc > 1)
 	{
-		for(unsigned int i=1 ; i!=argc ; i++)
+		for(unsigned int i = 1 ; i != argc ; i++)
 		{
 			parseParameter(argv[i]);
 		}	

@@ -36,7 +36,7 @@ struct keccakState *keccakCreate(int length)
 
 	state->A = new uint64_t[25];
 	memset(state->A, 0, 25*sizeof(uint64_t));
-	state->blockLen = 200 - 2 * (length/8);
+	state->blockLen = 200 - 2*(length/8);
 	state->buffer = new uint8_t[state->blockLen];
 	memset(state->buffer, 0, state->blockLen*sizeof(uint8_t));
 	state->bufferLen = 0;
@@ -47,7 +47,7 @@ struct keccakState *keccakCreate(int length)
 
 void keccakReset(keccakState *state)
 {
-	for (unsigned int i = 0; i < 25; i++) 
+	for(unsigned int i = 0 ; i<25 ; i++) 
 	{
 		state->A[i] = 0L;
 	}
@@ -60,7 +60,7 @@ void keccakReset(keccakState *state)
 void keccakUpdate(uint8_t input, keccakState *state)
 {
 	state->buffer[state->bufferLen] = input;
-	if (++(state->bufferLen) == state->blockLen) 
+	if(++(state->bufferLen) == state->blockLen) 
 	{
 		keccakProcessBuffer(state);
 	}
@@ -82,14 +82,14 @@ void keccakUpdate(const uint8_t *input, int off, int len, keccakState *state)
 			cpLen = state->blockLen - state->bufferLen;
 		}
 
-		for(unsigned int i=0 ; i!=cpLen ; i++)
+		for(unsigned int i = 0 ; i!=cpLen ; i++)
 		{
 			buffer[state->bufferLen+i] = input[off+i];
 		}
 		state->bufferLen += cpLen;
 		off += cpLen;
 		len -= cpLen;
-		if (state->bufferLen == state->blockLen) 
+		if(state->bufferLen == state->blockLen) 
 		{
 			keccakProcessBuffer(state);
 		}
@@ -106,7 +106,7 @@ unsigned char *keccakDigest(keccakState *state)
 	keccakAddPadding(state);
 	keccakProcessBuffer(state);
 	uint64_t *tmp = new uint64_t[state->length];
-	for (unsigned int i = 0; i < state->length ; i += 8) 
+	for(unsigned int i = 0 ; i < state->length ; i+= 8) 
 	{
 		tmp[i >> 3] = NativeToLittle(A[i >> 3]);
 	}
@@ -123,7 +123,7 @@ unsigned char *sha3Digest(keccakState *state)
 	sha3AddPadding(state);
 	keccakProcessBuffer(state);
 	uint64_t *tmp = new uint64_t[state->length];
-	for (unsigned int i = 0; i < state->length ; i += 8) 
+	for(unsigned int i = 0 ; i < state->length ; i+= 8) 
 	{
 		tmp[i >> 3] = NativeToLittle(A[i >> 3]);
 	}
@@ -135,14 +135,14 @@ void sha3AddPadding(keccakState *state)
 {
 	unsigned int bufferLen = state->bufferLen;
 	uint8_t *buffer = state->buffer;
-	if (state->bufferLen + 1 == state->blockLen) 
+	if(state->bufferLen + 1 == state->blockLen) 
 	{
 		buffer[bufferLen] = (uint8_t) 0x86;
 	} 
 	else 
 	{
 		buffer[bufferLen] = (uint8_t) 0x06;
-		for (unsigned int i = bufferLen + 1; i < state->blockLen - 1; i++) 
+		for(unsigned int i = bufferLen + 1 ; i < state->blockLen - 1 ; i++) 
 		{
 			buffer[i] = 0;
 		}
@@ -154,14 +154,14 @@ void keccakAddPadding(keccakState *state)
 {
 	unsigned int bufferLen = state->bufferLen;
 	uint8_t *buffer = state->buffer;
-	if (state->bufferLen + 1 == state->blockLen) 
+	if(state->bufferLen + 1 == state->blockLen) 
 	{
 		buffer[bufferLen] = (uint8_t) 0x81;
 	} 
 	else 
 	{
 		buffer[bufferLen] = (uint8_t) 0x01;
-		for (unsigned int i = bufferLen + 1; i < state->blockLen - 1; i++) 
+		for(unsigned int i = bufferLen + 1 ; i < state->blockLen - 1 ; i++) 
 		{
 			buffer[i] = 0;
 		}
@@ -172,7 +172,7 @@ void keccakAddPadding(keccakState *state)
 void keccakProcessBuffer(struct keccakState *state)
 {
 	uint64_t *A = state->A;
-	for (int i = 0; i < state->blockLen/8 ; i++) 
+	for(int i = 0 ; i < state->blockLen/8 ; i++) 
 	{
 		A[i] ^= LittleToNative(((uint64_t*)state->buffer)[i]);
 	}
@@ -212,9 +212,9 @@ void keccakf(keccakState *state)
 {
 	uint64_t *A = state->A;
 	keccakfState kState;
-	for (int n = 0; n < 24; n++) 
+	for(int n = 0 ; n < 24 ; n++) 
 	{
-		for (int x = 0; x < 5; x++) 
+		for(int x = 0 ; x < 5 ; x++) 
 		{
 			kState.C[x] = A[index(x, 0)] ^ A[index(x, 1)] ^ A[index(x, 2)] ^ A[index(x, 3)] ^ A[index(x, 4)];
 		}
