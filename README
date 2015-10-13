@@ -38,9 +38,6 @@ for example.
 
 ToDo:
 
-- Currently loads the entire file in one chunk, which is not ideal for systems
-  with limited RAM needing to hash large files - chunk up the file processing.
-  
 - Add command option to set the chunk size for reading.
 
 - Implement the SHAKE family of hashes.

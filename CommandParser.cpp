@@ -7,6 +7,8 @@ unsigned int hashWidth = 512;
 unsigned int sha3widths[] = {224, 256, 384, 512, 0};
 unsigned int keccakwidths[] = {224, 256, 384, 512, 0};
 
+unsigned int bufferSize = 1024 * 100 *100;
+char *buf = NULL;
 
 int doFile(const char *fileName)
 {
@@ -22,15 +24,20 @@ int doFile(const char *fileName)
 			printf("Unable to open input file: %s\n", fileName);
 			return 0;
 		}
-		fseek(fHand, 0, SEEK_END);
-		unsigned int fileSize = ftell(fHand);
 		fseek(fHand, 0, SEEK_SET);
-		char *msg = new char[fileSize];
-		fread(msg, 1, fileSize, fHand);
+		buf = new char[bufferSize];
+		while (true)
+		{
+			unsigned int bytesRead = fread(buf, 1, bufferSize, fHand);
+
+			keccakUpdate((uint8_t*)buf, 0, bytesRead, st);
+			if (bytesRead < bufferSize)
+			{
+				break;
+			}
+		}
+		delete[] buf;
 		fclose(fHand);
-		printf("Loaded\n");
-		keccakUpdate((uint8_t*)msg, 0, fileSize, st);
-		delete[] msg;
 		unsigned char *op = sha3Digest(st);
 
 		printf("SHA-3-%u %s: ", hashSize, fileName);
@@ -41,27 +48,33 @@ int doFile(const char *fileName)
 		printf("\n");
 		return 1;
 	}
-	else if (hashType==1)
+	else if (hashType == 1)
 	{
 		// Keccak
 		unsigned int hashSize = hashWidth;
 		keccakState *st = keccakCreate(hashSize);
 
 		FILE *fHand = fopen(fileName, "rb");
-		if(!fHand)
+		if (!fHand)
 		{
 			printf("Unable to open input file: %s\n", fileName);
 			return 0;
 		}
-		fseek(fHand, 0, SEEK_END);
-		unsigned int fileSize = ftell(fHand);
 		fseek(fHand, 0, SEEK_SET);
-		char *msg = new char[fileSize];
-		fread(msg, 1, fileSize, fHand);
+		char *buf = new char[bufferSize];
+		while (true)
+		{
+			unsigned int bytesRead = fread(buf, 1, bufferSize, fHand);
+
+			keccakUpdate((uint8_t*)buf, 0, bufferSize, st);
+
+			if (bytesRead < bufferSize)
+			{
+				break;
+			}
+		}
+		delete[] buf;
 		fclose(fHand);
-		printf("Loaded\n");
-		keccakUpdate((uint8_t*)msg, 0, fileSize, st);
-		delete[] msg;
 		unsigned char *op = keccakDigest(st);
 
 		printf("Keccak-%u %s: ", hashSize, fileName);
