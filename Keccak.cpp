@@ -506,17 +506,8 @@ void keccakf(keccakState *state)
 
 int main(int argc, char* argv[])
 {
-	//parseCommandLine(argc, argv);
+	parseCommandLine(argc, argv);
 
-	keccakState *state = shakeCreate(256, 512);
-	unsigned char *op = shakeDigest(state);
-
-	printf("SHAKE-%u \"\": ", 256);
-	for (unsigned int i = 0 ; i != (512 / 8) ; i++)
-	{
-		printf("%.2x", *(op++));
-	}
-	printf("\n");
 
 	return 0;
 }

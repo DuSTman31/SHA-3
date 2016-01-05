@@ -36,6 +36,9 @@
     <ClInclude Include="Keccak.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ParserCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

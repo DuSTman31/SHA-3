@@ -13,6 +13,7 @@ Usage: sha3sum [command]* file*
  
  -a=s   :  Set algorithm to SHA-3 (default).
  -a=k   :  Set algotithm to Keccak.
+ -a=h   :  Set algorithm to SHAKE
  
  Size
  
@@ -20,6 +21,12 @@ Usage: sha3sum [command]* file*
  -w=256 :  Set width to 256 bits.
  -w=384 :  Set width to 384 bits.
  -w=512 :  Set width to 512 bits (default).
+ 
+ Digest size (SHAKE)
+ 
+ -d=number : Set the SHAKE digest size. Should be less than or equal to the hash size.
+       Should be multiple of 8
+       Only relevant for SHAKE - For SHA-3 and keccak, digest size is equal to sponge size.
  
 Any number of files can be specified. Files will be processed with the most
 recently specified options - for example:
@@ -39,8 +46,6 @@ for example.
 ToDo:
 
 - Add command option to set the chunk size for reading.
-
-- Implement the SHAKE family of hashes.
 
 - Attempt formal proof of important aspects of this implementation. 
 
