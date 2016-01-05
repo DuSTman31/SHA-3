@@ -41,9 +41,28 @@ struct keccakState *keccakCreate(int length)
 	memset(state->buffer, 0, state->blockLen*sizeof(uint8_t));
 	state->bufferLen = 0;
 	state->length = length;
+	state->d = length;
 	return state;
 }
 
+// Function to create the state structure for SHAKE application, of size length
+//   (where length is the number of bits in the hash divided by 8. 
+//   (eg 32 for SHAKE256)
+struct keccakState *shakeCreate(int length, unsigned int d_)
+{
+	struct keccakState *state = new keccakState;
+	memset(state, 0, sizeof(keccakState));
+
+	state->A = new uint64_t[25];
+	memset(state->A, 0, 25 * sizeof(uint64_t));
+	state->blockLen = 200 - 2 * (length / 8);
+	state->buffer = new uint8_t[state->blockLen];
+	memset(state->buffer, 0, state->blockLen*sizeof(uint8_t));
+	state->bufferLen = 0;
+	state->length = length;
+	state->d = d_;
+	return state;
+}
 
 void keccakReset(keccakState *state)
 {
@@ -131,11 +150,28 @@ unsigned char *sha3Digest(keccakState *state)
 	return (unsigned char*)tmp;
 }
 
+// shakeDigest - called once all data has been few to the keccakUpdate functions
+//  Pads the structure (in case the input is not a multiple of the block length)
+//  returns the hash result in a char array (not null terminated)
+unsigned char *shakeDigest(keccakState *state)
+{
+	uint64_t *A = state->A;
+	shakeAddPadding(state);
+	keccakProcessBuffer(state);
+	uint64_t *tmp = new uint64_t[state->d];
+	for (unsigned int i = 0; i < state->d ; i += 8)
+	{
+		tmp[i >> 3] = NativeToLittle(A[i >> 3]);
+	}
+	keccakReset(state);
+	return (unsigned char*)tmp;
+}
+
 void sha3AddPadding(keccakState *state)
 {
 	unsigned int bufferLen = state->bufferLen;
 	uint8_t *buffer = state->buffer;
-	if(state->bufferLen + 1 == state->blockLen) 
+	if(bufferLen + 1 == state->blockLen) 
 	{
 		buffer[bufferLen] = (uint8_t) 0x86;
 	} 
@@ -154,7 +190,7 @@ void keccakAddPadding(keccakState *state)
 {
 	unsigned int bufferLen = state->bufferLen;
 	uint8_t *buffer = state->buffer;
-	if(state->bufferLen + 1 == state->blockLen) 
+	if(bufferLen + 1 == state->blockLen) 
 	{
 		buffer[bufferLen] = (uint8_t) 0x81;
 	} 
@@ -166,6 +202,25 @@ void keccakAddPadding(keccakState *state)
 			buffer[i] = 0;
 		}
 		buffer[state->blockLen - 1] = (uint8_t) 0x80;
+	}
+}
+
+void shakeAddPadding(keccakState *state)
+{
+	unsigned int bufferLen = state->bufferLen;
+	uint8_t *buffer = state->buffer;
+	if (bufferLen + 1 == state->blockLen)
+	{
+		buffer[bufferLen] = (uint8_t)0x9F;
+	}
+	else
+	{
+		buffer[bufferLen] = (uint8_t)0x1F;
+		for (unsigned int i = bufferLen + 1; i < state->blockLen - 1; i++)
+		{
+			buffer[i] = 0;
+		}
+		buffer[state->blockLen - 1] = (uint8_t)0x80;
 	}
 }
 
@@ -451,7 +506,17 @@ void keccakf(keccakState *state)
 
 int main(int argc, char* argv[])
 {
-	parseCommandLine(argc, argv);
+	//parseCommandLine(argc, argv);
+
+	keccakState *state = shakeCreate(256, 512);
+	unsigned char *op = shakeDigest(state);
+
+	printf("SHAKE-%u \"\": ", 256);
+	for (unsigned int i = 0 ; i != (512 / 8) ; i++)
+	{
+		printf("%.2x", *(op++));
+	}
+	printf("\n");
 
 	return 0;
 }
