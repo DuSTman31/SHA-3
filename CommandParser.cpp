@@ -256,7 +256,7 @@ int parseDigestWidth(const char *param, const unsigned int pSize)
 
 	if (index + 3 == pSize)
 	{
-		unsigned int sdl = atoun(&param[1], pSize-1);
+		unsigned int sdl = atoun(&param[index], pSize-index);
 		if (sdl % 8 != 0)
 		{
 			fprintf(stderr, "Error - param: %s is not divisible by 8.\n", param);
@@ -303,6 +303,10 @@ int parseOption(const char *param, const unsigned int pSize)
 		else if(commandInitial == 'w')
 		{
 			return parseWidth(&param[index+1], pSize-(index+1));
+		}
+		else if (commandInitial == 'd')
+		{
+			return parseDigestWidth(&param[index + 1], pSize - (index + 1));
 		}
 		else
 		{
