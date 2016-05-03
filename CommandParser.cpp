@@ -11,7 +11,7 @@ unsigned int sha3widths[] = {224, 256, 384, 512, 0};
 unsigned int keccakwidths[] = {224, 256, 384, 512, 0};
 unsigned int shakewidths[] = {128, 256, 0};
 
-unsigned int bufferSize = 1024 * 100 *100;
+unsigned int bufferSize = 1024 * 4;
 char *buf = NULL;
 
 int doFile(const char *fileName)
@@ -256,22 +256,31 @@ int parseDigestWidth(const char *param, const unsigned int pSize)
 
 	if (index + 3 == pSize)
 	{
-		unsigned int sdl = atoun(&param[index], pSize-index);
-		if (sdl % 8 != 0)
+		if (isNumeric(&param[index], pSize - index))
 		{
-			fprintf(stderr, "Error - param: %s is not divisible by 8.\n", param);
+			unsigned int sdl = atoun(&param[index], pSize - index);
+			if (sdl % 8 != 0)
+			{
+				fprintf(stderr, "Error - param: %s is not divisible by 8.\n", param+index);
+				return 0;
+			}
+			if (sdl > hashWidth)
+			{
+				fprintf(stderr, "Error - param: %s is greater than the hash size.\n", param+index);
+				return 0;
+			}
+			shakeDigestLength = sdl;
+			return 1;
+		}
+		else
+		{
+			fprintf(stderr, "Error - param: $s is not numeric. \n", param+index);
 			return 0;
 		}
-		if (sdl > hashWidth)
-		{
-			fprintf(stderr, "Error - param: %s is greater than the hash size.\n", param);
-			return 0;
-		}
-		shakeDigestLength = sdl;
-		return 1;
 	}
 	else
 	{
+		fprintf(stderr, "Error - param: %s - expecting a three digit number.\n", param+index);
 		return 0;
 	}
 
@@ -310,11 +319,13 @@ int parseOption(const char *param, const unsigned int pSize)
 		}
 		else
 		{
+			fprintf(stderr, "Error - Unrecognised option %s.\n", param);
 			return 0;	
 		}
 	}
 	else 
 	{
+		fprintf(stderr, "Error - malformed option.\n");
 		return 0;
 	}
 }

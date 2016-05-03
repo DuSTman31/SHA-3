@@ -30,5 +30,27 @@ inline unsigned int atoun(const char *buf, const unsigned int length)
 	return temp;
 }
 
+inline bool isNumeric(const char a)
+{
+	if ((a >= '0') && (a <= '9'))
+	{
+		return true;
+	}
+	return false;
+}
+
+// return true if the buffer range is all numeric.
+inline bool isNumeric(const char *buf, const unsigned int size)
+{
+	for (unsigned int i=0 ; i!=size ; i++)
+	{
+		if (!isNumeric(buf[i]))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 
 #endif //PARSER_COMMON_H_
