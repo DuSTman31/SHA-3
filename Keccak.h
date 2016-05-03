@@ -16,7 +16,7 @@ struct keccakState
 
 
 void keccakProcessBuffer(struct keccakState *state);
-void keccakUpdate(const uint8_t *input, int off, int len, keccakState *state);
+void keccakUpdate(const uint8_t *input, int off, unsigned int len, keccakState *state);
 unsigned char *keccakDigest(keccakState *state);
 unsigned char *sha3Digest(keccakState *state);
 unsigned char *shakeDigest(keccakState *state);

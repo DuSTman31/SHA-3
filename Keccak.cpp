@@ -86,7 +86,7 @@ void keccakUpdate(uint8_t input, keccakState *state)
 }
 
 //  Process a larger buffer with varying amounts of data in it
-void keccakUpdate(const uint8_t *input, int off, int len, keccakState *state)
+void keccakUpdate(const uint8_t *input, int off, unsigned int len, keccakState *state)
 {
 	uint8_t *buffer = state->buffer;
 	while (len > 0) 
@@ -142,7 +142,7 @@ unsigned char *sha3Digest(keccakState *state)
 	sha3AddPadding(state);
 	keccakProcessBuffer(state);
 	uint64_t *tmp = new uint64_t[state->length];
-	for(unsigned int i = 0 ; i < state->length ; i+= 8) 
+	for(int i = 0 ; i < state->length ; i+= 8) 
 	{
 		tmp[i >> 3] = NativeToLittle(A[i >> 3]);
 	}
@@ -227,7 +227,7 @@ void shakeAddPadding(keccakState *state)
 void keccakProcessBuffer(struct keccakState *state)
 {
 	uint64_t *A = state->A;
-	for(int i = 0 ; i < state->blockLen/8 ; i++) 
+	for(unsigned int i = 0 ; i < state->blockLen/8 ; i++) 
 	{
 		A[i] ^= LittleToNative(((uint64_t*)state->buffer)[i]);
 	}
