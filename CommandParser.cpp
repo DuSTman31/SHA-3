@@ -274,7 +274,7 @@ int parseDigestWidth(const char *param, const unsigned int pSize)
 		}
 		else
 		{
-			fprintf(stderr, "Error - param: $s is not numeric. \n", param+index);
+			fprintf(stderr, "Error - param: %s is not numeric. \n", param+index);
 			return 0;
 		}
 	}
