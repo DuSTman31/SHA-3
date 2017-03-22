@@ -70,7 +70,7 @@ int doFile(const char *fileName)
 		{
 			unsigned int bytesRead = fread(buf, 1, bufferSize, fHand);
 
-			keccakUpdate((uint8_t*)buf, 0, bufferSize, st);
+			keccakUpdate((uint8_t*)buf, 0, bytesRead, st);
 
 			if (bytesRead < bufferSize)
 			{
@@ -107,7 +107,7 @@ int doFile(const char *fileName)
 		{
 			unsigned int bytesRead = fread(buf, 1, bufferSize, fHand);
 
-			keccakUpdate((uint8_t*)buf, 0, bufferSize, st);
+			keccakUpdate((uint8_t*)buf, 0, bytesRead, st);
 
 			if (bytesRead < bufferSize)
 			{
