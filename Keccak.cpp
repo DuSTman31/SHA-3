@@ -3,6 +3,7 @@
 #include "CommandParser.h"
 
 #include "Endian.h"
+#include "Rotation.h"
 
 // Constants of the Keccak algorithm.
 
@@ -234,15 +235,6 @@ void keccakProcessBuffer(struct keccakState *state)
 	keccakf(state);
 	state->bufferLen = 0;
 }
-
-
-// As we're not using assembly, we can't use the native rotation instructions
-//  replace it with a small inline
-static inline uint64_t rotateLeft(uint64_t x, int n)
-{
-	return ((x << n) | (x >> (64 - n)));
-}
-
 
 inline int index(int x)
 {
