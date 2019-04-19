@@ -132,12 +132,11 @@ vector<unsigned char> keccakDigest(keccakState *state)
 	tmp.reserve(lengthInBytes);
 	for(unsigned int i = 0 ; i < lengthInQuads ; i++) 
 	{
-		uint64_t b = NativeToLittle(A[i]);
+		uint64_t b = A[i];
 		for (unsigned int j = 0 ; j!=8 ; j++)
 		{
 			tmp.push_back((unsigned char)((b >> (8*j)) & 0xFF));
 		}
-		//tmp[i] = NativeToLittle(A[i]);
 	}
 	keccakReset(state);
 	return tmp;
@@ -158,7 +157,7 @@ vector<unsigned char> sha3Digest(keccakState *state)
 	tmp.reserve(lengthInBytes);
 	for(unsigned int i = 0 ; i < lengthInQuads ; i++) 
 	{
-		uint64_t b = NativeToLittle(A[i]);
+		uint64_t b = A[i];
 		for (unsigned int j = 0; j != 8; j++)
 		{
 			tmp.push_back((unsigned char)((b >> (8 * j)) & 0xFF));
@@ -183,7 +182,7 @@ vector<unsigned char> shakeDigest(keccakState *state)
 	tmp.reserve(lengthInBytes);
 	for (unsigned int i = 0 ; i < lengthInQuads ; i++)
 	{
-		uint64_t b = NativeToLittle(A[i]);
+		uint64_t b = A[i];
 		for (unsigned int j = 0; j != 8; j++)
 		{
 			tmp.push_back((unsigned char)((b >> (8 * j)) & 0xFF));
