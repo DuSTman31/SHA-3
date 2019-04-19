@@ -175,7 +175,7 @@ vector<unsigned char> shakeDigest(keccakState *state)
 {
 	uint64_t *A = state->A;
 	unsigned int lengthInBytes = state->d / 8;
-	unsigned int lengthInQuads = lengthInBytes / 64;
+	unsigned int lengthInQuads = lengthInBytes / 8;
 
 	shakeAddPadding(state);
 	keccakProcessBuffer(state);
