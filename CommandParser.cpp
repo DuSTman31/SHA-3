@@ -42,12 +42,12 @@ int doFile(const char *fileName)
 		}
 		delete[] buf;
 		fclose(fHand);
-		unsigned char *op = sha3Digest(st);
+		vector<unsigned char> op = sha3Digest(st);
 
 		printf("SHA-3-%u %s: ", hashSize, fileName);
-		for(unsigned int i = 0 ; i != (hashSize/8) ; i++)
+		for(auto &oi : op)
 		{
-			printf("%.2x", *(op++));
+			printf("%.2x", oi);
 		}
 		printf("\n");
 		return 1;
@@ -79,12 +79,12 @@ int doFile(const char *fileName)
 		}
 		delete[] buf;
 		fclose(fHand);
-		unsigned char *op = keccakDigest(st);
+		vector<unsigned char> op = keccakDigest(st);
 
 		printf("Keccak-%u %s: ", hashSize, fileName);
-		for(unsigned int i = 0 ; i != (hashSize/8) ; i++)
+		for(auto &oi : op)
 		{
-			printf("%.2x", *(op++));
+			printf("%.2x", oi);
 		}
 		printf("\n");
 		return 1;
@@ -116,12 +116,12 @@ int doFile(const char *fileName)
 		}
 		delete[] buf;
 		fclose(fHand);
-		unsigned char *op = shakeDigest(st);
+		vector<unsigned char> op = shakeDigest(st);
 
 		printf("SHAKE-%u %s: ", hashSize, fileName);
-		for (unsigned int i = 0; i != (shakeDigestLength / 8); i++)
+		for (auto &oi : op)
 		{
-			printf("%.2x", *(op++));
+			printf("%.2x", oi);
 		}
 		printf("\n");
 		return 1;

@@ -120,52 +120,78 @@ void keccakUpdate(const uint8_t *input, int off, unsigned int len, keccakState *
 // keccakDigest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
 //  returns the hash result in a char array (not null terminated)
-unsigned char *keccakDigest(keccakState *state)
+vector<unsigned char> keccakDigest(keccakState *state)
 {
 	uint64_t *A = state->A;
+	unsigned int lengthInBytes = state->length / 8;
+	unsigned int lengthInQuads = lengthInBytes / 8;
+
 	keccakAddPadding(state);
 	keccakProcessBuffer(state);
-	uint64_t *tmp = new uint64_t[state->length];
-	for(unsigned int i = 0 ; i < state->length ; i+= 8) 
+	vector<unsigned char> tmp;
+	tmp.reserve(lengthInBytes);
+	for(unsigned int i = 0 ; i < lengthInQuads ; i++) 
 	{
-		tmp[i >> 3] = NativeToLittle(A[i >> 3]);
+		uint64_t b = NativeToLittle(A[i]);
+		for (unsigned int j = 0 ; j!=8 ; j++)
+		{
+			tmp.push_back((unsigned char)((b >> (8*j)) & 0xFF));
+		}
+		//tmp[i] = NativeToLittle(A[i]);
 	}
 	keccakReset(state);
-	return (unsigned char*)tmp;
+	return tmp;
 }
 
 // sha3Digest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
 //  returns the hash result in a char array (not null terminated)
-unsigned char *sha3Digest(keccakState *state)
+vector<unsigned char> sha3Digest(keccakState *state)
 {
 	uint64_t *A = state->A;
+	unsigned int lengthInBytes = state->length / 8;
+	unsigned int lengthInQuads = lengthInBytes / 8;
+
 	sha3AddPadding(state);
 	keccakProcessBuffer(state);
-	uint64_t *tmp = new uint64_t[state->length];
-	for(int i = 0 ; i < state->length ; i+= 8) 
+	vector<unsigned char> tmp;
+	tmp.reserve(lengthInBytes);
+	for(unsigned int i = 0 ; i < lengthInQuads ; i++) 
 	{
-		tmp[i >> 3] = NativeToLittle(A[i >> 3]);
+		uint64_t b = NativeToLittle(A[i]);
+		for (unsigned int j = 0; j != 8; j++)
+		{
+			tmp.push_back((unsigned char)((b >> (8 * j)) & 0xFF));
+		}
 	}
 	keccakReset(state);
-	return (unsigned char*)tmp;
+	return tmp;
 }
 
 // shakeDigest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
 //  returns the hash result in a char array (not null terminated)
-unsigned char *shakeDigest(keccakState *state)
+vector<unsigned char> shakeDigest(keccakState *state)
 {
 	uint64_t *A = state->A;
+	unsigned int lengthInBytes = state->d / 8;
+	unsigned int lengthInQuads = lengthInBytes / 64;
+
 	shakeAddPadding(state);
 	keccakProcessBuffer(state);
-	uint64_t *tmp = new uint64_t[state->d];
-	for (unsigned int i = 0; i < state->d ; i += 8)
+	vector<unsigned char> tmp;
+	tmp.reserve(lengthInBytes);
+	for (unsigned int i = 0 ; i < lengthInQuads ; i++)
 	{
-		tmp[i >> 3] = NativeToLittle(A[i >> 3]);
+		uint64_t b = NativeToLittle(A[i]);
+		for (unsigned int j = 0; j != 8; j++)
+		{
+			tmp.push_back((unsigned char)((b >> (8 * j)) & 0xFF));
+		}
+
 	}
 	keccakReset(state);
-	return (unsigned char*)tmp;
+	return tmp;
 }
 
 void sha3AddPadding(keccakState *state)
