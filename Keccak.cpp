@@ -47,7 +47,7 @@ struct keccakState *keccakCreate(unsigned int length)
 
 // Function to create the state structure for SHAKE application, of size length
 //   (where length is the number of bits in the hash) 
-struct keccakState *shakeCreate(int length, unsigned int d_)
+struct keccakState *shakeCreate(unsigned int length, unsigned int d_)
 {
 	struct keccakState *state = new keccakState;
 	memset(state, 0, sizeof(keccakState));
