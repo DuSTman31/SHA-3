@@ -14,117 +14,81 @@ unsigned int shakewidths[] = {128, 256, 0};
 unsigned int bufferSize = 1024 * 4;
 char *buf = NULL;
 
+template<typename F>
+int readFileIntoFunc(const char *fileName, F f) 
+{
+	FILE *fHand = fopen(fileName, "rb");
+	if (!fHand)
+	{
+		printf("Unable to open input file: %s\n", fileName);
+		return 0;
+	}
+	fseek(fHand, 0, SEEK_SET);
+	buf = new char[bufferSize];
+	while (true)
+	{
+		unsigned int bytesRead = fread(buf, 1, bufferSize, fHand);
+
+		f((uint8_t*)buf, bytesRead);
+		if (bytesRead < bufferSize)
+		{
+			break;
+		}
+	}
+	delete[] buf;
+
+	fclose(fHand);
+	return 1;
+};
+
+template<typename F1, typename F2>
+int hashFile(const char *fileName, const char *hashName, F1 initFunc, F2 finalFunc)
+{
+	unsigned int hashSize = hashWidth;
+	auto *st = initFunc(hashSize);
+
+	if (readFileIntoFunc(fileName, [st](uint8_t* buf, unsigned int bLength){ keccakUpdate(buf, 0, bLength, st); }) == 0)
+	{
+		return 0;
+	}
+
+	vector<unsigned char> op = finalFunc(st);
+
+	printf("%s-%u %s: ", hashName, hashSize, fileName);
+	for (auto &oi : op)
+	{
+		printf("%.2x", oi);
+	}
+	printf("\n");
+	return 1;
+}
+
 int doFile(const char *fileName)
 {
 	if(hashType==0)
 	{
 		//  SHA-3
-		unsigned int hashSize = hashWidth;
-		keccakState *st = keccakCreate(hashSize);
 
-		FILE *fHand = fopen(fileName, "rb");
-		if(!fHand)
-		{
-			printf("Unable to open input file: %s\n", fileName);
-			return 0;
-		}
-		fseek(fHand, 0, SEEK_SET);
-		buf = new char[bufferSize];
-		while (true)
-		{
-			unsigned int bytesRead = fread(buf, 1, bufferSize, fHand);
-
-			keccakUpdate((uint8_t*)buf, 0, bytesRead, st);
-			if (bytesRead < bufferSize)
-			{
-				break;
-			}
-		}
-		delete[] buf;
-		fclose(fHand);
-		vector<unsigned char> op = sha3Digest(st);
-
-		printf("SHA-3-%u %s: ", hashSize, fileName);
-		for(auto &oi : op)
-		{
-			printf("%.2x", oi);
-		}
-		printf("\n");
-		return 1;
+		return hashFile(fileName, "SHA-3", 
+			[](unsigned int hs){ return keccakCreate(hs);  }, 
+			[](keccakState *st){ return sha3Digest(st); });
 	}
 	else if (hashType == 1)
 	{
 		// Keccak
-		unsigned int hashSize = hashWidth;
-		keccakState *st = keccakCreate(hashSize);
 
-		FILE *fHand = fopen(fileName, "rb");
-		if (!fHand)
-		{
-			printf("Unable to open input file: %s\n", fileName);
-			return 0;
-		}
-		fseek(fHand, 0, SEEK_SET);
-		char *buf = new char[bufferSize];
-		while (true)
-		{
-			unsigned int bytesRead = fread(buf, 1, bufferSize, fHand);
-
-			keccakUpdate((uint8_t*)buf, 0, bytesRead, st);
-
-			if (bytesRead < bufferSize)
-			{
-				break;
-			}
-		}
-		delete[] buf;
-		fclose(fHand);
-		vector<unsigned char> op = keccakDigest(st);
-
-		printf("Keccak-%u %s: ", hashSize, fileName);
-		for(auto &oi : op)
-		{
-			printf("%.2x", oi);
-		}
-		printf("\n");
-		return 1;
+		return hashFile(fileName, "Keccak", 
+			[](unsigned int hs){ return keccakCreate(hs);  }, 
+			[](keccakState *st){ return keccakDigest(st); });
 	}
 	else if (hashType == 2)
 	{
 		// SHAKE
-		unsigned int hashSize = hashWidth;
-		keccakState *st = shakeCreate(hashSize, shakeDigestLength);
 
-		FILE *fHand = fopen(fileName, "rb");
-		if (!fHand)
-		{
-			printf("Unable to open input file: %s\n", fileName);
-			return 0;
-		}
-		fseek(fHand, 0, SEEK_SET);
-		char *buf = new char[bufferSize];
-		while (true)
-		{
-			unsigned int bytesRead = fread(buf, 1, bufferSize, fHand);
+		return hashFile(fileName, "SHAKE", 
+			[](unsigned int hs){ return shakeCreate(hs, shakeDigestLength);  }, 
+			[](keccakState *st){ return shakeDigest(st); });
 
-			keccakUpdate((uint8_t*)buf, 0, bytesRead, st);
-
-			if (bytesRead < bufferSize)
-			{
-				break;
-			}
-		}
-		delete[] buf;
-		fclose(fHand);
-		vector<unsigned char> op = shakeDigest(st);
-
-		printf("SHAKE-%u %s: ", hashSize, fileName);
-		for (auto &oi : op)
-		{
-			printf("%.2x", oi);
-		}
-		printf("\n");
-		return 1;
 	}
 	return 0;
 }
