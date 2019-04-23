@@ -11,7 +11,7 @@ struct keccakState
 	unsigned int blockLen;
 	uint8_t *buffer;
 	unsigned int bufferLen;
-	int length;
+	unsigned int length;
 	unsigned int d;
 };
 
@@ -26,5 +26,5 @@ void keccakAddPadding(keccakState *state);
 void keccakf(keccakState *state);
 void sha3AddPadding(keccakState *state);
 void shakeAddPadding(keccakState *state);
-struct keccakState *keccakCreate(int length);
-struct keccakState *shakeCreate(int length, unsigned int d_);
+struct keccakState *keccakCreate(unsigned int length);
+struct keccakState *shakeCreate(unsigned int length, unsigned int d_);

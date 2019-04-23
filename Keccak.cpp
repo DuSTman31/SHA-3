@@ -28,9 +28,8 @@ inline int index(int x);
 inline int index(int x, int y);
 
 // Function to create the state structure for keccak application, of size length
-//   (where length is the number of bits in the hash divided by 8. 
-//   (eg 64 for SHA-3-512)
-struct keccakState *keccakCreate(int length)
+//   (where length is the number of bits in the hash)
+struct keccakState *keccakCreate(unsigned int length)
 {
 	struct keccakState *state = new keccakState;
 	memset(state, 0, sizeof(keccakState));
@@ -47,8 +46,7 @@ struct keccakState *keccakCreate(int length)
 }
 
 // Function to create the state structure for SHAKE application, of size length
-//   (where length is the number of bits in the hash divided by 8. 
-//   (eg 32 for SHAKE256)
+//   (where length is the number of bits in the hash) 
 struct keccakState *shakeCreate(int length, unsigned int d_)
 {
 	struct keccakState *state = new keccakState;
