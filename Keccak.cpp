@@ -121,7 +121,7 @@ template <typename T1>
 vector<unsigned char> digest(keccakState *state, unsigned int hashLength, T1 paddingFunc)
 {
 	uint64_t *A = state->A;
-	unsigned int lengthInBytes = state->length / 8;
+	unsigned int lengthInBytes = hashLength / 8;
 	unsigned int lengthInQuads = lengthInBytes / 8;
 	bool rollOverData = false;
 	if (lengthInBytes % 8 != 0)
@@ -156,7 +156,7 @@ vector<unsigned char> digest(keccakState *state, unsigned int hashLength, T1 pad
 
 // keccakDigest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
-//  returns the hash result in a char array (not null terminated)
+//  returns the hash result in a char vector
 vector<unsigned char> keccakDigest(keccakState *state)
 {
 	return digest(state, state->length, 
@@ -165,7 +165,7 @@ vector<unsigned char> keccakDigest(keccakState *state)
 
 // sha3Digest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
-//  returns the hash result in a char array (not null terminated)
+//  returns the hash result in a char vector
 vector<unsigned char> sha3Digest(keccakState *state)
 {
 	return digest(state, state->length,
@@ -174,7 +174,7 @@ vector<unsigned char> sha3Digest(keccakState *state)
 
 // shakeDigest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
-//  returns the hash result in a char array (not null terminated)
+//  returns the hash result in a char vector
 vector<unsigned char> shakeDigest(keccakState *state)
 {
 	return digest(state, state->d,
