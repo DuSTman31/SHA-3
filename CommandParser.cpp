@@ -6,7 +6,7 @@
 #include <cstdlib>
 
 
-unsigned int hashType = 0;
+
 unsigned int hashWidth = 512;
 unsigned int shakeDigestLength = 512;
 unsigned int sha3widths[] = {224, 256, 384, 512, 0};
@@ -15,13 +15,16 @@ unsigned int shakewidths[] = {128, 256, 0};
 
 unsigned int bufferSize = 1024 * 4;
 
+enum class HashType {Sha3, Keccak, Shake};
+HashType hashType = HashType::Sha3;
+
 template<typename F>
 int readFileIntoFunc(const char *fileName, F f) 
 {
 	FILE *fHand = fopen(fileName, "rb");
 	if (!fHand)
 	{
-		printf("Unable to open input file: %s\n", fileName);
+		fprintf(stderr, "Unable to open input file: %s\n", fileName);
 		return 0;
 	}
 	FileHandleWrapper fhw(fHand);
@@ -67,7 +70,7 @@ int hashFile(const char *fileName, const char *hashName, F1 initFunc, F2 finalFu
 
 int doFile(const char *fileName)
 {
-	if(hashType==0)
+	if(hashType == HashType::Sha3)
 	{
 		//  SHA-3
 
@@ -75,7 +78,7 @@ int doFile(const char *fileName)
 			[](unsigned int hs){ return keccakCreate(hs);  }, 
 			[](keccakState *st){ return sha3Digest(st); });
 	}
-	else if (hashType == 1)
+	else if (hashType == HashType::Keccak)
 	{
 		// Keccak
 
@@ -83,7 +86,7 @@ int doFile(const char *fileName)
 			[](unsigned int hs){ return keccakCreate(hs);  }, 
 			[](keccakState *st){ return keccakDigest(st); });
 	}
-	else if (hashType == 2)
+	else if (hashType == HashType::Shake)
 	{
 		// SHAKE
 
@@ -146,17 +149,17 @@ int parseAlg(const char *param, const unsigned int pSize)
 		const char algInitial = param[index];
 		if(algInitial == 'k')
 		{
-			hashType = 1;
+			hashType = HashType::Keccak;
 			return 1;
 		}
 		else if(algInitial == 's')
 		{
-			hashType = 0;
+			hashType = HashType::Sha3;
 			return 1;
 		}
 		else if (algInitial == 'h')
 		{
-			hashType = 2;
+			hashType = HashType::Shake;
 			return 1;
 		}
 		else
