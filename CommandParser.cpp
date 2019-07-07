@@ -2,7 +2,9 @@
 #include "CommandParser.h"
 #include "Keccak.h"
 #include "ParserCommon.h"
+#include "RAII_Wrapper.h"
 #include <cstdlib>
+
 
 unsigned int hashType = 0;
 unsigned int hashWidth = 512;
@@ -12,7 +14,6 @@ unsigned int keccakwidths[] = {224, 256, 384, 512, 0};
 unsigned int shakewidths[] = {128, 256, 0};
 
 unsigned int bufferSize = 1024 * 4;
-char *buf = NULL;
 
 template<typename F>
 int readFileIntoFunc(const char *fileName, F f) 
@@ -23,21 +24,21 @@ int readFileIntoFunc(const char *fileName, F f)
 		printf("Unable to open input file: %s\n", fileName);
 		return 0;
 	}
+	FileHandleWrapper fhw(fHand);
+
 	fseek(fHand, 0, SEEK_SET);
-	buf = new char[bufferSize];
+	ArrayWrapper<char> buf(bufferSize);
 	while (true)
 	{
-		unsigned int bytesRead = fread(buf, 1, bufferSize, fHand);
+		unsigned int bytesRead = fread((void *)buf.data, 1, bufferSize, fHand);
 
-		f((uint8_t*)buf, bytesRead);
+		f((uint8_t*)buf.data, bytesRead);
 		if (bytesRead < bufferSize)
 		{
 			break;
 		}
 	}
-	delete[] buf;
 
-	fclose(fHand);
 	return 1;
 };
 
@@ -46,13 +47,14 @@ int hashFile(const char *fileName, const char *hashName, F1 initFunc, F2 finalFu
 {
 	unsigned int hashSize = hashWidth;
 	auto *st = initFunc(hashSize);
+	KeccakStateWrapper state(st);
 
 	if (readFileIntoFunc(fileName, [st](uint8_t* buf, unsigned int bLength){ keccakUpdate(buf, 0, bLength, st); }) == 0)
 	{
 		return 0;
 	}
 
-	vector<unsigned char> op = finalFunc(st);
+	std::vector<unsigned char> op = finalFunc(st);
 
 	printf("%s-%u %s: ", hashName, hashSize, fileName);
 	for (auto &oi : op)

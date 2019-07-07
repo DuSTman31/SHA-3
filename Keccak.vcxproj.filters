@@ -42,6 +42,9 @@
     <ClInclude Include="Rotation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RAII_Wrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

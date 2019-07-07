@@ -63,6 +63,13 @@ struct keccakState *shakeCreate(unsigned int length, unsigned int d_)
 	return state;
 }
 
+void keccakDelete(keccakState *state)
+{
+	delete[] state->A;
+	delete[] state->buffer;
+	delete state;
+}
+
 void keccakReset(keccakState *state)
 {
 	for(unsigned int i = 0 ; i<25 ; i++) 
@@ -116,7 +123,7 @@ void keccakUpdate(const uint8_t *input, int off, unsigned int len, keccakState *
 
 
 template <typename T1>
-vector<unsigned char> digest(keccakState *state, unsigned int hashLength, T1 paddingFunc)
+std::vector<unsigned char> digest(keccakState *state, unsigned int hashLength, T1 paddingFunc)
 {
 	uint64_t *A = state->A;
 	unsigned int lengthInBytes = hashLength / 8;
@@ -129,7 +136,7 @@ vector<unsigned char> digest(keccakState *state, unsigned int hashLength, T1 pad
 
 	paddingFunc(state);
 	keccakProcessBuffer(state);
-	vector<unsigned char> tmp;
+	std::vector<unsigned char> tmp;
 	tmp.reserve(lengthInBytes);
 	for (unsigned int i = 0; i < lengthInQuads; i++)
 	{
@@ -155,7 +162,7 @@ vector<unsigned char> digest(keccakState *state, unsigned int hashLength, T1 pad
 // keccakDigest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
 //  returns the hash result in a char vector
-vector<unsigned char> keccakDigest(keccakState *state)
+std::vector<unsigned char> keccakDigest(keccakState *state)
 {
 	return digest(state, state->length, 
 		[](keccakState *st){ keccakAddPadding(st); });
@@ -164,7 +171,7 @@ vector<unsigned char> keccakDigest(keccakState *state)
 // sha3Digest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
 //  returns the hash result in a char vector
-vector<unsigned char> sha3Digest(keccakState *state)
+std::vector<unsigned char> sha3Digest(keccakState *state)
 {
 	return digest(state, state->length,
 		[](keccakState *st){ sha3AddPadding(st); });
@@ -173,7 +180,7 @@ vector<unsigned char> sha3Digest(keccakState *state)
 // shakeDigest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
 //  returns the hash result in a char vector
-vector<unsigned char> shakeDigest(keccakState *state)
+std::vector<unsigned char> shakeDigest(keccakState *state)
 {
 	return digest(state, state->d,
 		[](keccakState *st){ shakeAddPadding(st); });
