@@ -4,23 +4,6 @@
 #include "Keccak.h"
 #include "stdafx.h"
 
-// We create classes to wrap resources used in the code, in order
-//  that these can be disposed of automatically when they go out
-//  of scope according to the RAII paradigm.
-
-class KeccakStateWrapper 
-{
-public:
-	KeccakStateWrapper(keccakState *st) : state(st) {};
-	~KeccakStateWrapper()
-	{
-		keccakDelete(state);
-	};
-private:
-	keccakState *state;
-};
-
-
 // RAII wrapper for C standard library FILE pointers.
 //  Calls fclose on destruction.
 class FileHandleWrapper

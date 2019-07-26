@@ -45,19 +45,17 @@ int readFileIntoFunc(const char *fileName, F f)
 	return 1;
 };
 
-template<typename F1, typename F2>
-int hashFile(const char *fileName, const char *hashName, F1 initFunc, F2 finalFunc)
+template<typename F1>
+int hashFile(const char *fileName, const char *hashName, F1 &hashObj)
 {
 	unsigned int hashSize = hashWidth;
-	auto *st = initFunc(hashSize);
-	KeccakStateWrapper state(st);
 
-	if (readFileIntoFunc(fileName, [st](uint8_t* buf, unsigned int bLength){ keccakUpdate(buf, 0, bLength, st); }) == 0)
+	if (readFileIntoFunc(fileName, [&hashObj](uint8_t* buf, unsigned int bLength){ hashObj.addData(buf, 0, bLength); }) == 0)
 	{
 		return 0;
 	}
 
-	std::vector<unsigned char> op = finalFunc(st);
+	std::vector<unsigned char> op = hashObj.digest();
 
 	printf("%s-%u %s: ", hashName, hashSize, fileName);
 	for (auto &oi : op)
@@ -73,26 +71,20 @@ int doFile(const char *fileName)
 	if(hashType == HashType::Sha3)
 	{
 		//  SHA-3
-
-		return hashFile(fileName, "SHA-3", 
-			[](unsigned int hs){ return keccakCreate(hs);  }, 
-			[](keccakState *st){ return sha3Digest(st); });
+		Sha3 h(hashWidth);
+		return hashFile(fileName, "SHA-3", h);
 	}
 	else if (hashType == HashType::Keccak)
 	{
 		// Keccak
-
-		return hashFile(fileName, "Keccak", 
-			[](unsigned int hs){ return keccakCreate(hs);  }, 
-			[](keccakState *st){ return keccakDigest(st); });
+		Keccak h(hashWidth);
+		return hashFile(fileName, "Keccak", h);
 	}
 	else if (hashType == HashType::Shake)
 	{
 		// SHAKE
-
-		return hashFile(fileName, "SHAKE", 
-			[](unsigned int hs){ return shakeCreate(hs, shakeDigestLength);  }, 
-			[](keccakState *st){ return shakeDigest(st); });
+		Shake h(hashWidth, shakeDigestLength);
+		return hashFile(fileName, "SHAKE", h);
 
 	}
 	return 0;

@@ -1,30 +1,53 @@
 #pragma once
 
 #include "stdafx.h"
+#include "HashFunction.h"
 
 // State structure
-struct keccakState
+class KeccakBase : public HashFunction
 {
+public:
+	KeccakBase(unsigned int len);
+	virtual ~KeccakBase();
+	virtual std::vector<unsigned char> digest() = 0;
+	virtual void addPadding() = 0;
+	void reset();
+	void keccakf();
+	virtual void addData(uint8_t input);
+	virtual void addData(const uint8_t *input, unsigned int off, unsigned int len);
+	void processBuffer();
+protected:
 	uint64_t *A;
 	unsigned int blockLen;
 	uint8_t *buffer;
 	unsigned int bufferLen;
 	unsigned int length;
-	unsigned int d;
 };
 
+class Sha3 : public KeccakBase
+{
+public:
+	Sha3(unsigned int len);
+	std::vector<unsigned char> digest();
+	void addPadding();
+private:
+};
 
+class Keccak : public KeccakBase
+{
+public:
+	Keccak(unsigned int len);
+	std::vector<unsigned char> digest();
+	void addPadding();
+private:
+};
 
-void keccakProcessBuffer(struct keccakState *state);
-void keccakUpdate(const uint8_t *input, int off, unsigned int len, keccakState *state);
-std::vector<unsigned char> keccakDigest(keccakState *state);
-std::vector<unsigned char> sha3Digest(keccakState *state);
-std::vector<unsigned char> shakeDigest(keccakState *state);
-void keccakAddPadding(keccakState *state);
-void keccakf(keccakState *state);
-void sha3AddPadding(keccakState *state);
-void shakeAddPadding(keccakState *state);
-
-struct keccakState *keccakCreate(unsigned int length);
-struct keccakState *shakeCreate(unsigned int length, unsigned int d_);
-void keccakDelete(keccakState *state);
+class Shake : public KeccakBase
+{
+public:
+	Shake(unsigned int len, unsigned int d_);
+	std::vector<unsigned char> digest();
+	void addPadding();
+private:
+	unsigned int d;
+};

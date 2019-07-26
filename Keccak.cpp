@@ -24,108 +24,94 @@ const int R[] = {
 };
 
 
-inline int index(int x);
-inline int index(int x, int y);
+static inline int index(int x);
+static inline int index(int x, int y);
 
 // Function to create the state structure for keccak application, of size length
 //   (where length is the number of bits in the hash)
-struct keccakState *keccakCreate(unsigned int length)
+KeccakBase::KeccakBase(unsigned int length_)
 {
-	struct keccakState *state = new keccakState;
-	memset(state, 0, sizeof(keccakState));
-
-	state->A = new uint64_t[25];
-	memset(state->A, 0, 25*sizeof(uint64_t));
-	state->blockLen = 200 - 2*(length/8);
-	state->buffer = new uint8_t[state->blockLen];
-	memset(state->buffer, 0, state->blockLen*sizeof(uint8_t));
-	state->bufferLen = 0;
-	state->length = length;
-	state->d = length;
-	return state;
+	A = new uint64_t[25];
+	memset(A, 0, 25*sizeof(uint64_t));
+	blockLen = 200 - 2*(length_/8);
+	buffer = new uint8_t[blockLen];
+	memset(buffer, 0, blockLen*sizeof(uint8_t));
+	bufferLen = 0;
+	length = length_;
 }
+
+Sha3::Sha3(unsigned int len_) : KeccakBase(len_)
+{};
+
+Keccak::Keccak(unsigned int len_) : KeccakBase(len_)
+{};
 
 // Function to create the state structure for SHAKE application, of size length
 //   (where length is the number of bits in the hash) 
-struct keccakState *shakeCreate(unsigned int length, unsigned int d_)
+Shake::Shake(unsigned int length_, unsigned int d_) : KeccakBase(length_)
 {
-	struct keccakState *state = new keccakState;
-	memset(state, 0, sizeof(keccakState));
-
-	state->A = new uint64_t[25];
-	memset(state->A, 0, 25 * sizeof(uint64_t));
-	state->blockLen = 200 - 2 * (length / 8);
-	state->buffer = new uint8_t[state->blockLen];
-	memset(state->buffer, 0, state->blockLen*sizeof(uint8_t));
-	state->bufferLen = 0;
-	state->length = length;
-	state->d = d_;
-	return state;
+	d = d_;
 }
 
-void keccakDelete(keccakState *state)
+KeccakBase::~KeccakBase()
 {
-	delete[] state->A;
-	delete[] state->buffer;
-	delete state;
+	delete[] A;
+	delete[] buffer;
 }
 
-void keccakReset(keccakState *state)
+void KeccakBase::reset()
 {
 	for(unsigned int i = 0 ; i<25 ; i++) 
 	{
-		state->A[i] = 0L;
+		A[i] = 0L;
 	}
-	state->bufferLen = 0;
+	bufferLen = 0;
 }
 
 // keccakUpdate - Functions to pack input data into a block
 
 //  One byte input at a time - process buffer if it's empty
-void keccakUpdate(uint8_t input, keccakState *state)
+void KeccakBase::addData(uint8_t input)
 {
-	state->buffer[state->bufferLen] = input;
-	if(++(state->bufferLen) == state->blockLen) 
+	buffer[bufferLen] = input;
+	if(++(bufferLen) == blockLen) 
 	{
-		keccakProcessBuffer(state);
+		processBuffer();
 	}
 }
 
 //  Process a larger buffer with varying amounts of data in it
-void keccakUpdate(const uint8_t *input, int off, unsigned int len, keccakState *state)
+void KeccakBase::addData(const uint8_t *input, unsigned int off, unsigned int len)
 {
-	uint8_t *buffer = state->buffer;
 	while (len > 0) 
 	{
 		int cpLen = 0;
-		if((state->blockLen - state->bufferLen) > len)
+		if((blockLen - bufferLen) > len)
 		{
 			cpLen = len;
 		}
 		else
 		{
-			cpLen = state->blockLen - state->bufferLen;
+			cpLen = blockLen - bufferLen;
 		}
 
 		for(unsigned int i = 0 ; i!=cpLen ; i++)
 		{
-			buffer[state->bufferLen+i] = input[off+i];
+			buffer[bufferLen+i] = input[off+i];
 		}
-		state->bufferLen += cpLen;
+		bufferLen += cpLen;
 		off += cpLen;
 		len -= cpLen;
-		if(state->bufferLen == state->blockLen) 
+		if(bufferLen == blockLen) 
 		{
-			keccakProcessBuffer(state);
+			processBuffer();
 		}
 	}
 }
 
-
-template <typename T1>
-std::vector<unsigned char> digest(keccakState *state, unsigned int hashLength, T1 paddingFunc)
+template <typename T1, typename T2, typename T3>
+std::vector<unsigned char> digest_generic(uint64_t *A, unsigned int hashLength, T1 paddingFunc, T2 processBufferFunc, T3 resetFunc)
 {
-	uint64_t *A = state->A;
 	unsigned int lengthInBytes = hashLength / 8;
 	unsigned int lengthInQuads = lengthInBytes / 8;
 	bool rollOverData = false;
@@ -134,8 +120,8 @@ std::vector<unsigned char> digest(keccakState *state, unsigned int hashLength, T
 		rollOverData = true;
 	}
 
-	paddingFunc(state);
-	keccakProcessBuffer(state);
+	paddingFunc();
+	processBufferFunc();
 	std::vector<unsigned char> tmp;
 	tmp.reserve(lengthInBytes);
 	for (unsigned int i = 0; i < lengthInQuads; i++)
@@ -155,111 +141,111 @@ std::vector<unsigned char> digest(keccakState *state, unsigned int hashLength, T
 		}
 	}
 
-	keccakReset(state);
+	resetFunc();
 	return tmp;
 }
 
 // keccakDigest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
 //  returns the hash result in a char vector
-std::vector<unsigned char> keccakDigest(keccakState *state)
+std::vector<unsigned char> Keccak::digest()
 {
-	return digest(state, state->length, 
-		[](keccakState *st){ keccakAddPadding(st); });
+	return digest_generic(A, length, 
+		[this]() { addPadding(); },
+		[this]() { processBuffer(); },
+		[this]() { reset(); });
 }
 
 // sha3Digest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
 //  returns the hash result in a char vector
-std::vector<unsigned char> sha3Digest(keccakState *state)
+std::vector<unsigned char> Sha3::digest()
 {
-	return digest(state, state->length,
-		[](keccakState *st){ sha3AddPadding(st); });
+	return digest_generic(A, length,
+		[this]() { addPadding(); },
+		[this]() { processBuffer(); },
+		[this]() { reset(); });
 }
 
 // shakeDigest - called once all data has been few to the keccakUpdate functions
 //  Pads the structure (in case the input is not a multiple of the block length)
 //  returns the hash result in a char vector
-std::vector<unsigned char> shakeDigest(keccakState *state)
+std::vector<unsigned char> Shake::digest()
 {
-	return digest(state, state->d,
-		[](keccakState *st){ shakeAddPadding(st); });
+	return digest_generic(A, d,
+		[this]() { addPadding(); },
+		[this]() { processBuffer(); },
+		[this]() { reset(); });
 }
 
-void sha3AddPadding(keccakState *state)
+void Sha3::addPadding()
 {
-	unsigned int bufferLen = state->bufferLen;
-	uint8_t *buffer = state->buffer;
-	if(bufferLen + 1 == state->blockLen) 
+	if(bufferLen + 1 == blockLen) 
 	{
 		buffer[bufferLen] = (uint8_t) 0x86;
 	} 
 	else 
 	{
 		buffer[bufferLen] = (uint8_t) 0x06;
-		for(unsigned int i = bufferLen + 1 ; i < state->blockLen - 1 ; i++) 
+		for(unsigned int i = bufferLen + 1 ; i < blockLen - 1 ; i++) 
 		{
 			buffer[i] = 0;
 		}
-		buffer[state->blockLen - 1] = (uint8_t) 0x80;
+		buffer[blockLen - 1] = (uint8_t) 0x80;
 	}
 }
 
-void keccakAddPadding(keccakState *state)
+void Keccak::addPadding()
 {
-	unsigned int bufferLen = state->bufferLen;
-	uint8_t *buffer = state->buffer;
-	if(bufferLen + 1 == state->blockLen) 
+	if(bufferLen + 1 == blockLen) 
 	{
 		buffer[bufferLen] = (uint8_t) 0x81;
 	} 
 	else 
 	{
 		buffer[bufferLen] = (uint8_t) 0x01;
-		for(unsigned int i = bufferLen + 1 ; i < state->blockLen - 1 ; i++) 
+		for(unsigned int i = bufferLen + 1 ; i < blockLen - 1 ; i++) 
 		{
 			buffer[i] = 0;
 		}
-		buffer[state->blockLen - 1] = (uint8_t) 0x80;
+		buffer[blockLen - 1] = (uint8_t) 0x80;
 	}
 }
 
-void shakeAddPadding(keccakState *state)
+void Shake::addPadding()
 {
-	unsigned int bufferLen = state->bufferLen;
-	uint8_t *buffer = state->buffer;
-	if (bufferLen + 1 == state->blockLen)
+
+	if (bufferLen + 1 == blockLen)
 	{
 		buffer[bufferLen] = (uint8_t)0x9F;
 	}
 	else
 	{
 		buffer[bufferLen] = (uint8_t)0x1F;
-		for (unsigned int i = bufferLen + 1; i < state->blockLen - 1; i++)
+		for (unsigned int i = bufferLen + 1; i < blockLen - 1; i++)
 		{
 			buffer[i] = 0;
 		}
-		buffer[state->blockLen - 1] = (uint8_t)0x80;
+		buffer[blockLen - 1] = (uint8_t)0x80;
 	}
 }
 
-void keccakProcessBuffer(struct keccakState *state)
+void KeccakBase::processBuffer()
 {
-	uint64_t *A = state->A;
-	for(unsigned int i = 0 ; i < state->blockLen/8 ; i++) 
+	for(unsigned int i = 0 ; i < blockLen/8 ; i++) 
 	{
-		A[i] ^= LittleToNative(((uint64_t*)state->buffer)[i]);
+		A[i] ^= LittleToNative(((uint64_t*)buffer)[i]);
 	}
-	keccakf(state);
-	state->bufferLen = 0;
+	keccakf();
+	bufferLen = 0;
 }
 
-inline int index(int x)
+static inline int index(int x)
 {
 	return x < 0 ? index(x + 5) : x % 5;
 }
 
-inline int index(int x, int y)
+static inline int index(int x, int y)
 {
 	return index(x) + 5 * index(y);
 }
@@ -271,17 +257,16 @@ struct keccakfState
 	uint64_t D[5];
 };
 
-
 // Hash function proper. 
-void keccakf(keccakState *state)
+void KeccakBase::keccakf()
 {
-	uint64_t *A = state->A;
+	uint64_t *A_ = A;
 	keccakfState kState;
 	for(int n = 0 ; n < 24 ; n++) 
 	{
 		for(int x = 0 ; x < 5 ; x++) 
 		{
-			kState.C[x] = A[index(x, 0)] ^ A[index(x, 1)] ^ A[index(x, 2)] ^ A[index(x, 3)] ^ A[index(x, 4)];
+			kState.C[x] = A_[index(x, 0)] ^ A_[index(x, 1)] ^ A_[index(x, 2)] ^ A_[index(x, 3)] ^ A_[index(x, 4)];
 		}
 		int i;
 		int x = 0;
@@ -289,228 +274,228 @@ void keccakf(keccakState *state)
 		x = 0; 
 		kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 		y = 0;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 1;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 2;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 3;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 4;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		x = 1; 
 		kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 		y = 0;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 1;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 2;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 3;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 4;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		x = 2; 
 		kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 		y = 0;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 1;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 2;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 3;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 4;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		x = 3; 
 		kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 		y = 0;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 1;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 2;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 3;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 4;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		x = 4; 
 		kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 		y = 0;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 1;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 2;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 3;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 		y = 4;
-		A[index(x, y)] ^= kState.D[x];
+		A_[index(x, y)] ^= kState.D[x];
 
 
 		x = 0;
 		y = 0;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 1;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 2;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 3;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 4;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		x = 1;
 		y = 0;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 1;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 2;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 3;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 4;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);				
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);				
 		x = 2;
 		y = 0;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 1;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 2;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 3;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 4;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);			
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);			
 		x = 3;
 		y = 0;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 1;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 2;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 3;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 4;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);			
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);			
 		x = 4;
 		y = 0;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 1;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 2;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 3;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 4;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A[i], R[i]);			
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);			
 				
 		x = 0;
 		y = 0;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 1;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 2;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 3;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 4;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		x = 1;
 		y = 0;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 1;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 2;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 3;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 4;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		x = 2;
 		y = 0;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 1;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 2;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 3;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 4;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		x = 3;
 		y = 0;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 1;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 2;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 3;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 4;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		x = 4;
 		y = 0;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 1;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 2;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 3;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		y = 4;
 		i = index(x, y);
-		A[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
+		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
 		
-		A[0] ^= RC[n];
+		A_[0] ^= RC[n];
 	}
 }
 
