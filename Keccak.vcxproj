@@ -190,6 +190,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AssemblerOutput>All</AssemblerOutput>
       <DebugInformationFormat>None</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -225,6 +226,7 @@
     <ClInclude Include="CommandParser.h" />
     <ClInclude Include="Endian.h" />
     <ClInclude Include="HashFunction.h" />
+    <ClInclude Include="Hex.h" />
     <ClInclude Include="Keccak.h" />
     <ClInclude Include="ParserCommon.h" />
     <ClInclude Include="RAII_Wrapper.h" />

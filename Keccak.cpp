@@ -264,14 +264,20 @@ void KeccakBase::keccakf()
 	keccakfState kState;
 	for(int n = 0 ; n < 24 ; n++) 
 	{
-		for(int x = 0 ; x < 5 ; x++) 
-		{
-			kState.C[x] = A_[index(x, 0)] ^ A_[index(x, 1)] ^ A_[index(x, 2)] ^ A_[index(x, 3)] ^ A_[index(x, 4)];
-		}
-		int i;
 		int x = 0;
+		kState.C[x] = A_[index(x, 0)] ^ A_[index(x, 1)] ^ A_[index(x, 2)] ^ A_[index(x, 3)] ^ A_[index(x, 4)];
+		x = 1;
+		kState.C[x] = A_[index(x, 0)] ^ A_[index(x, 1)] ^ A_[index(x, 2)] ^ A_[index(x, 3)] ^ A_[index(x, 4)];
+		x = 2;
+		kState.C[x] = A_[index(x, 0)] ^ A_[index(x, 1)] ^ A_[index(x, 2)] ^ A_[index(x, 3)] ^ A_[index(x, 4)];
+		x = 3;
+		kState.C[x] = A_[index(x, 0)] ^ A_[index(x, 1)] ^ A_[index(x, 2)] ^ A_[index(x, 3)] ^ A_[index(x, 4)];
+		x = 4;
+		kState.C[x] = A_[index(x, 0)] ^ A_[index(x, 1)] ^ A_[index(x, 2)] ^ A_[index(x, 3)] ^ A_[index(x, 4)];
+
+		int i;
+		x = 0;
 		int y = 0;
-		x = 0; 
 		kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 		y = 0;
 		A_[index(x, y)] ^= kState.D[x];

@@ -9,12 +9,14 @@
 #include "targetver.h"
 #endif //_MSC_VER
 
-
 #include <cstdio>
 #include <cstdint>
 #include <cstring>
 
 #include <vector>
 #include <array>
+
+#include <iostream>
+#include <sstream>
 
 // TODO: reference additional headers your program requires here

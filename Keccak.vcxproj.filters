@@ -45,6 +45,9 @@
     <ClInclude Include="RAII_Wrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Hex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

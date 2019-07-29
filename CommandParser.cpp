@@ -4,19 +4,15 @@
 #include "ParserCommon.h"
 #include "RAII_Wrapper.h"
 #include <cstdlib>
+#include "Hex.h"
 
 
-
-unsigned int hashWidth = 512;
-unsigned int shakeDigestLength = 512;
 unsigned int sha3widths[] = {224, 256, 384, 512, 0};
 unsigned int keccakwidths[] = {224, 256, 384, 512, 0};
 unsigned int shakewidths[] = {128, 256, 0};
 
 unsigned int bufferSize = 1024 * 4;
 
-enum class HashType {Sha3, Keccak, Shake};
-HashType hashType = HashType::Sha3;
 
 template<typename F>
 int readFileIntoFunc(const char *fileName, F f) 
@@ -24,7 +20,7 @@ int readFileIntoFunc(const char *fileName, F f)
 	FILE *fHand = fopen(fileName, "rb");
 	if (!fHand)
 	{
-		fprintf(stderr, "Unable to open input file: %s\n", fileName);
+		std::cerr << "Unable to open input file: " << fileName << "\n";
 		return 0;
 	}
 	FileHandleWrapper fhw(fHand);
@@ -46,9 +42,9 @@ int readFileIntoFunc(const char *fileName, F f)
 };
 
 template<typename F1>
-int hashFile(const char *fileName, const char *hashName, F1 &hashObj)
+int hashFile(const char *fileName, const std::string &hashName, F1 &hashObj)
 {
-	unsigned int hashSize = hashWidth;
+	//unsigned int hashSize = hashWidth;
 
 	if (readFileIntoFunc(fileName, [&hashObj](uint8_t* buf, unsigned int bLength){ hashObj.addData(buf, 0, bLength); }) == 0)
 	{
@@ -57,34 +53,41 @@ int hashFile(const char *fileName, const char *hashName, F1 &hashObj)
 
 	std::vector<unsigned char> op = hashObj.digest();
 
-	printf("%s-%u %s: ", hashName, hashSize, fileName);
+	std::ostringstream b;
+	std::cout << hashName << fileName << ": ";
 	for (auto &oi : op)
 	{
-		printf("%.2x", oi);
+		Hex(oi, [&b](unsigned char a) { b << a; });
 	}
-	printf("\n");
+	std::cout << b.str() << "\n";
 	return 1;
 }
 
-int doFile(const char *fileName)
+int doFile(const char *fileName, options &opt)
 {
-	if(hashType == HashType::Sha3)
+	if(opt.type == HashType::Sha3)
 	{
 		//  SHA-3
-		Sha3 h(hashWidth);
-		return hashFile(fileName, "SHA-3", h);
+		Sha3 h(opt.hashWidth);
+		std::ostringstream description;
+		description << "SHA-3-" << opt.hashWidth;
+		return hashFile(fileName, description.str(), h);
 	}
-	else if (hashType == HashType::Keccak)
+	else if (opt.type == HashType::Keccak)
 	{
 		// Keccak
-		Keccak h(hashWidth);
-		return hashFile(fileName, "Keccak", h);
+		Keccak h(opt.hashWidth);
+		std::ostringstream description;
+		description << "Keccak-" << opt.hashWidth;
+		return hashFile(fileName, description.str(), h);
 	}
-	else if (hashType == HashType::Shake)
+	else if (opt.type == HashType::Shake)
 	{
 		// SHAKE
-		Shake h(hashWidth, shakeDigestLength);
-		return hashFile(fileName, "SHAKE", h);
+		Shake h(opt.hashWidth, opt.shakeDigestLength);
+		std::ostringstream description;
+		description << "SHAKE-" << opt.shakeDigestLength;
+		return hashFile(fileName, description.str(), h);
 
 	}
 	return 0;
@@ -128,7 +131,7 @@ void usage()
 
 }
 
-int parseAlg(const char *param, const unsigned int pSize)
+int parseAlg(const char *param, const unsigned int pSize, options &opt)
 {
 	unsigned int index = 0;
 	if(param[index] == '=')
@@ -141,17 +144,17 @@ int parseAlg(const char *param, const unsigned int pSize)
 		const char algInitial = param[index];
 		if(algInitial == 'k')
 		{
-			hashType = HashType::Keccak;
+			opt.type = HashType::Keccak;
 			return 1;
 		}
 		else if(algInitial == 's')
 		{
-			hashType = HashType::Sha3;
+			opt.type = HashType::Sha3;
 			return 1;
 		}
 		else if (algInitial == 'h')
 		{
-			hashType = HashType::Shake;
+			opt.type = HashType::Shake;
 			return 1;
 		}
 		else
@@ -165,7 +168,7 @@ int parseAlg(const char *param, const unsigned int pSize)
 	}
 }
 
-int parseWidth(const char *param, const unsigned int pSize)
+int parseWidth(const char *param, const unsigned int pSize, options &opt)
 {
 	unsigned int index = 0;
 	if(param[index] == '=')
@@ -177,22 +180,22 @@ int parseWidth(const char *param, const unsigned int pSize)
 	{
 		if(strncmp(&param[index], "224", pSize-index)==0)
 		{
-			hashWidth = 224;
+			opt.hashWidth = 224;
 			return 1;
 		}
 		else if(strncmp(&param[index], "256", pSize-index)==0)
 		{
-			hashWidth = 256;
+			opt.hashWidth = 256;
 			return 1;	
 		}
 		else if(strncmp(&param[index], "384", pSize-index)==0)
 		{
-			hashWidth = 384;
+			opt.hashWidth = 384;
 			return 1;
 		}
 		else if(strncmp(&param[index], "512", pSize-index)==0)
 		{
-			hashWidth = 512;
+			opt.hashWidth = 512;
 			return 1;
 		}
 		else
@@ -207,7 +210,7 @@ int parseWidth(const char *param, const unsigned int pSize)
 
 }
 
-int parseDigestWidth(const char *param, const unsigned int pSize)
+int parseDigestWidth(const char *param, const unsigned int pSize, options &opt)
 {
 	unsigned int index = 0;
 	if (param[index] == '=')
@@ -222,32 +225,32 @@ int parseDigestWidth(const char *param, const unsigned int pSize)
 			unsigned int sdl = atoun(&param[index], pSize - index);
 			if (sdl % 8 != 0)
 			{
-				fprintf(stderr, "Error - param: %s is not divisible by 8.\n", param+index);
+				std::cerr << "Error - param: " << param + index << " is not divisible by 8.\n";
 				return 0;
 			}
-			if (sdl > hashWidth)
+			if (sdl > opt.hashWidth)
 			{
-				fprintf(stderr, "Error - param: %s is greater than the hash size.\n", param+index);
+				std::cerr << "Error - param: " << param + index << " is greater than the hash size.\n";
 				return 0;
 			}
-			shakeDigestLength = sdl;
+			opt.shakeDigestLength = sdl;
 			return 1;
 		}
 		else
 		{
-			fprintf(stderr, "Error - param: %s is not numeric. \n", param+index);
+			std::cerr << "Error - param: " << param + index << " is not numeric. \n";
 			return 0;
 		}
 	}
 	else
 	{
-		fprintf(stderr, "Error - param: %s - expecting a three digit number.\n", param+index);
+		std::cerr << "Error - param: " << param + index << " - expecting a three digit number.\n";
 		return 0;
 	}
 
 }
 
-int parseOption(const char *param, const unsigned int pSize)
+int parseOption(const char *param, const unsigned int pSize, options &opt)
 {
 	unsigned int index = 1;
 
@@ -268,30 +271,30 @@ int parseOption(const char *param, const unsigned int pSize)
 		}
 		else if(commandInitial == 'a')
 		{
-			return parseAlg(&param[index+1], pSize-(index+1));	
+			return parseAlg(&param[index+1], pSize-(index+1), opt);	
 		}
 		else if(commandInitial == 'w')
 		{
-			return parseWidth(&param[index+1], pSize-(index+1));
+			return parseWidth(&param[index+1], pSize-(index+1), opt);
 		}
 		else if (commandInitial == 'd')
 		{
-			return parseDigestWidth(&param[index + 1], pSize - (index + 1));
+			return parseDigestWidth(&param[index + 1], pSize - (index + 1), opt);
 		}
 		else
 		{
-			fprintf(stderr, "Error - Unrecognised option %s.\n", param);
+			std::cerr << "Error - Unrecognised option " << param << "\n";
 			return 0;	
 		}
 	}
 	else 
 	{
-		fprintf(stderr, "Error - malformed option.\n");
+		std::cerr << "Error - malformed option.\n";
 		return 0;
 	}
 }
 
-void parseParameter(const char *param)
+void parseParameter(const char *param, options &opt)
 {
 	unsigned int index = 0;
 	unsigned int paramSize = 0;
@@ -313,11 +316,11 @@ void parseParameter(const char *param)
 	{
 		if(param[index] != '-')
 		{
-			doFile(&param[index]);
+			doFile(&param[index], opt);
 		}
 		else
 		{
-			parseOption(&param[index], paramSize-index);	
+			parseOption(&param[index], paramSize-index, opt);	
 		}
 	}
 }
@@ -326,9 +329,16 @@ void parseCommandLine(const int argc, char* argv[])
 {
 	if(argc > 1)
 	{
+
+		options opt;
+		// Default options
+		opt.type = HashType::Sha3;
+		opt.hashWidth = 512;
+		opt.shakeDigestLength = 512;
+
 		for(unsigned int i = 1 ; i != argc ; i++)
 		{
-			parseParameter(argv[i]);
+			parseParameter(argv[i], opt);
 		}	
 	}
 }
