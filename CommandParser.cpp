@@ -54,7 +54,7 @@ int hashFile(const char *fileName, const std::string &hashName, F1 &hashObj)
 	std::vector<unsigned char> op = hashObj.digest();
 
 	std::ostringstream b;
-	std::cout << hashName << fileName << ": ";
+	std::cout << hashName << " " << fileName << ": ";
 	for (auto &oi : op)
 	{
 		Hex(oi, [&b](unsigned char a) { b << a; });

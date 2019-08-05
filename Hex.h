@@ -17,8 +17,8 @@ static inline void Hex(const unsigned char a, F func)
 	unsigned char b = a & 0x0F;
 	unsigned char c = a & 0xF0;
 	c >>= 4;
-	func(Hex(b));
 	func(Hex(c));
+	func(Hex(b));
 }
 
 #endif //HEX_H_
