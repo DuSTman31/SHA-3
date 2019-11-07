@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Keccak.h"
-#include "CommandParser.h"
 
 #include "Endian.h"
 #include "Rotation.h"
@@ -504,12 +503,3 @@ void KeccakBase::keccakf()
 		A_[0] ^= RC[n];
 	}
 }
-
-int main(int argc, char* argv[])
-{
-	parseCommandLine(argc, argv);
-
-
-	return 0;
-}
-
