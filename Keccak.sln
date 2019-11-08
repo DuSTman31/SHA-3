@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29409.12
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KeccakCli", "Keccak.vcxproj", "{D03CBC50-5838-47EB-A1F9-8427EE54AF31}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KeccakCli", "SHA-3\KeccakCli.vcxproj", "{D03CBC50-5838-47EB-A1F9-8427EE54AF31}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KeccakTests", "..\KeccakTests\KeccakTests.vcxproj", "{CF32878E-FCD8-42FD-A6A2-8E701BD30243}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KeccakTests", "KeccakTests\KeccakTests.vcxproj", "{CF32878E-FCD8-42FD-A6A2-8E701BD30243}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
