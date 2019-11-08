@@ -5,6 +5,7 @@
 #include "RAII_Wrapper.h"
 #include <cstdlib>
 #include "Hex.h"
+#include "Base64.h"
 
 
 unsigned int sha3widths[] = {224, 256, 384, 512, 0};
@@ -42,7 +43,7 @@ int readFileIntoFunc(const char *fileName, F f)
 };
 
 template<typename F1>
-int hashFile(const char *fileName, const std::string &hashName, F1 &hashObj)
+int hashFile(const char *fileName, const std::string &hashName, F1 &hashObj, OutputFormat outpt)
 {
 	//unsigned int hashSize = hashWidth;
 
@@ -53,13 +54,25 @@ int hashFile(const char *fileName, const std::string &hashName, F1 &hashObj)
 
 	std::vector<unsigned char> op = hashObj.digest();
 
-	std::ostringstream b;
 	std::cout << hashName << " " << fileName << ": ";
-	for (auto &oi : op)
+	if (outpt == OutputFormat::Hex)
 	{
-		Hex(oi, [&b](unsigned char a) { b << a; });
+		std::ostringstream b;
+		for (auto& oi : op)
+		{
+			Hex(oi, [&b](unsigned char a) { b << a; });
+		}
+		std::cout << b.str();
 	}
-	std::cout << b.str() << "\n";
+	else 
+	{
+		std::string dest;
+		size_t len = op.size();
+		dest.resize(base64::encoded_size(len));
+		dest.resize(base64::encode(&dest[0], op.data(), len));
+		std::cout << dest;
+	}
+	std::cout << "\n";
 	return 1;
 }
 
@@ -71,7 +84,7 @@ int doFile(const char *fileName, options &opt)
 		Sha3 h(opt.hashWidth);
 		std::ostringstream description;
 		description << "SHA-3-" << opt.hashWidth;
-		return hashFile(fileName, description.str(), h);
+		return hashFile(fileName, description.str(), h, opt.output);
 	}
 	else if (opt.type == HashType::Keccak)
 	{
@@ -79,7 +92,7 @@ int doFile(const char *fileName, options &opt)
 		Keccak h(opt.hashWidth);
 		std::ostringstream description;
 		description << "Keccak-" << opt.hashWidth;
-		return hashFile(fileName, description.str(), h);
+		return hashFile(fileName, description.str(), h, opt.output);
 	}
 	else if (opt.type == HashType::Shake)
 	{
@@ -87,7 +100,7 @@ int doFile(const char *fileName, options &opt)
 		Shake h(opt.hashWidth, opt.shakeDigestLength);
 		std::ostringstream description;
 		description << "SHAKE-" << opt.shakeDigestLength;
-		return hashFile(fileName, description.str(), h);
+		return hashFile(fileName, description.str(), h, opt.output);
 
 	}
 	return 0;
@@ -120,6 +133,11 @@ void usage()
 	" -d=number : Set the SHAKE digest size. Should be less than or equal to the hash size.\n"
 	"		should be multiple of 8.\n"
 	"       Only relevant for SHAKE - For SHA-3 and keccak, digest size is equal to sponge size.\n"
+	"\n"
+	" Output format flag\n"
+	"\n"
+	" -b : Base 64 encoded.\n"
+	" [no flag] : hexadecimal (default)\n"
 	"\n"
 	"Any number of files can be specified. Files will be processed with the most\n"
 	"recently specified options - for example:\n"
@@ -281,6 +299,10 @@ int parseOption(const char *param, const unsigned int pSize, options &opt)
 		{
 			return parseDigestWidth(&param[index + 1], pSize - (index + 1), opt);
 		}
+		else if (commandInitial == 'b')
+		{
+			opt.output = OutputFormat::Base64;
+		}
 		else
 		{
 			std::cerr << "Error - Unrecognised option " << param << "\n";
@@ -335,6 +357,7 @@ void parseCommandLine(const int argc, char* argv[])
 		opt.type = HashType::Sha3;
 		opt.hashWidth = 512;
 		opt.shakeDigestLength = 512;
+		opt.output = OutputFormat::Hex;
 
 		for(unsigned int i = 1 ; i != argc ; i++)
 		{
