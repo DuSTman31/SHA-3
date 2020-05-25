@@ -134,10 +134,10 @@ void usage()
 	"		should be multiple of 8.\n"
 	"       Only relevant for SHAKE - For SHA-3 and keccak, digest size is equal to sponge size.\n"
 	"\n"
-	" Output format flag\n"
+	" Output format\n"
 	"\n"
-	" -b : Base 64 encoded.\n"
-	" [no flag] : hexadecimal (default)\n"
+	" -o=b : Base 64 encoded.\n"
+	" -o=h : Hexadecimal (default)\n"
 	"\n"
 	"Any number of files can be specified. Files will be processed with the most\n"
 	"recently specified options - for example:\n"
@@ -268,6 +268,33 @@ int parseDigestWidth(const char *param, const unsigned int pSize, options &opt)
 
 }
 
+int parseOutputOption(const char *param, const unsigned int pSize, options &opt)
+{
+	unsigned int index = 0;
+	if (param[index] == '=')
+	{
+		index++;
+	}
+
+	if (index != pSize)
+	{
+		const char formatInitial = param[index];
+		switch (formatInitial)
+		{
+		case 'h':
+			opt.output = OutputFormat::Hex;
+			return 1;
+			break;
+		case 'b':
+			opt.output = OutputFormat::Base64;
+			return 1;
+			break;
+		default:
+			return 0;
+		}
+	}
+}
+
 int parseOption(const char *param, const unsigned int pSize, options &opt)
 {
 	unsigned int index = 1;
@@ -299,9 +326,9 @@ int parseOption(const char *param, const unsigned int pSize, options &opt)
 		{
 			return parseDigestWidth(&param[index + 1], pSize - (index + 1), opt);
 		}
-		else if (commandInitial == 'b')
+		else if (commandInitial == 'o')
 		{
-			opt.output = OutputFormat::Base64;
+			return parseOutputOption(&param[index + 1], pSize - (index + 1), opt);
 		}
 		else
 		{
