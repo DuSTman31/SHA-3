@@ -7,7 +7,7 @@
 
 // Constants of the Keccak algorithm.
 
-const uint64_t RC[] = {
+constexpr uint64_t RC[] = {
 	0x0000000000000001L, 0x0000000000008082L, 0x800000000000808aL,
 	0x8000000080008000L, 0x000000000000808bL, 0x0000000080000001L,
 	0x8000000080008081L, 0x8000000000008009L, 0x000000000000008aL,
@@ -18,14 +18,14 @@ const uint64_t RC[] = {
 	0x8000000000008080L, 0x0000000080000001L, 0x8000000080008008L
 };
 
-const int R[] = {
+constexpr int R[] = {
 	0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43,
 	25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14
 };
 
 
-static inline int index(int x);
-static inline int index(int x, int y);
+static inline constexpr int index(int x);
+static inline constexpr int index(int x, int y);
 
 // Function to create the state structure for keccak application, of size length
 //   (where length is the number of bits in the hash)
@@ -240,12 +240,12 @@ void KeccakBase::processBuffer()
 	bufferLen = 0;
 }
 
-static inline int index(int x)
+static inline constexpr int index(int x)
 {
 	return x < 0 ? index(x + 5) : x % 5;
 }
 
-static inline int index(int x, int y)
+static inline constexpr int index(int x, int y)
 {
 	return index(x) + 5 * index(y);
 }
@@ -262,6 +262,8 @@ void KeccakBase::keccakf()
 {
 	uint64_t *A_ = A;
 	keccakfState kState;
+
+
 	for(int n = 0 ; n < 24 ; n++) 
 	{
 		int x = 0;

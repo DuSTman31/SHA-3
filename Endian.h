@@ -11,7 +11,7 @@ inline bool littleEndian()
 	uint8_t test;
 
 	tn = 0xff00;
-	test = static_cast<uint8_t>(tn);
+	test = *reinterpret_cast<uint8_t*>(&tn);
 	if (!test)
 		return true;
 	else
