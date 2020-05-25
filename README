@@ -28,6 +28,11 @@ Usage: sha3sum [command]* file*
  -d=number : Set the SHAKE digest size. Should be less than or equal to the hash size.
        Should be multiple of 8
        Only relevant for SHAKE - For SHA-3 and keccak, digest size is equal to sponge size.
+
+ Output format flag
+
+ -b : Base 64 encoded.
+ [no flag] : hexadecimal (default)
  
 Any number of files can be specified. Files will be processed with the most
 recently specified options - for example:
