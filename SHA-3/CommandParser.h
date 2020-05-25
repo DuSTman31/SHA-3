@@ -1,12 +1,14 @@
 #pragma once
 
 enum class HashType { Sha3, Keccak, Shake };
+enum class OutputFormat { Hex, Base64 };
 
 struct options
 {
 	HashType type;
 	unsigned int hashWidth;
 	unsigned int shakeDigestLength;
+	OutputFormat output;
 };
 
 

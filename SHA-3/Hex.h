@@ -1,9 +1,9 @@
 #ifndef HEX_H_
 #define HEX_H_
-
+//https://codereview.stackexchange.com/questions/78535/converting-array-of-bytes-to-the-hex-string-representation
 static inline char Hex(const unsigned char a)
 {
-	const char *palette = "0123456789abcdef";
+	static char constexpr palette[] = "0123456789abcdef";
 	if (a <= 0x0F)
 	{
 		return palette[a];
