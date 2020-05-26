@@ -290,6 +290,7 @@ int parseOutputOption(const char *param, const unsigned int pSize, options &opt)
 			return 1;
 			break;
 		default:
+			std::cerr << "Output type option " << &param[index] << "not recognised.\n";
 			return 0;
 		}
 	}
