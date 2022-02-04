@@ -8,7 +8,9 @@ class KeccakBase : public HashFunction
 {
 public:
 	KeccakBase(unsigned int len);
+	KeccakBase(const KeccakBase& other);
 	virtual ~KeccakBase();
+	KeccakBase& operator=(const KeccakBase& other);
 	virtual std::vector<unsigned char> digest() = 0;
 	virtual void addPadding() = 0;
 	void reset();
@@ -28,6 +30,8 @@ class Sha3 : public KeccakBase
 {
 public:
 	Sha3(unsigned int len);
+	Sha3(const Sha3& other);
+	Sha3& operator=(const Sha3& other);
 	std::vector<unsigned char> digest();
 	void addPadding();
 private:
@@ -37,6 +41,8 @@ class Keccak : public KeccakBase
 {
 public:
 	Keccak(unsigned int len);
+	Keccak(const Keccak& other);
+	Keccak& operator=(const Keccak& other);
 	std::vector<unsigned char> digest();
 	void addPadding();
 private:
@@ -46,6 +52,8 @@ class Shake : public KeccakBase
 {
 public:
 	Shake(unsigned int len, unsigned int d_);
+	Shake(const Shake& other);
+	Shake& operator=(const Shake& other);
 	std::vector<unsigned char> digest();
 	void addPadding();
 private:
