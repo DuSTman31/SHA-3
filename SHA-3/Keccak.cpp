@@ -47,17 +47,75 @@ KeccakBase::KeccakBase(unsigned int length_)
 	length = length_;
 }
 
+KeccakBase::KeccakBase(const KeccakBase& other)
+	: blockLen(other.blockLen)
+	, bufferLen(other.bufferLen)
+	, length(other.length)
+{
+	A = new uint64_t[25];
+	memcpy(A, other.A, 25*sizeof(uint64_t));
+	buffer = new uint8_t[blockLen];
+	memcpy(buffer, other.buffer, blockLen*sizeof(uint8_t));
+}
+
+KeccakBase& KeccakBase::operator=(const KeccakBase& other)
+{
+	if(this != &other)
+	{
+		memcpy(A, other.A, 25*sizeof(uint64_t));
+		if (blockLen != other.blockLen)
+		{
+			blockLen = other.blockLen;
+			delete[] buffer;
+			buffer = new uint8_t[blockLen];
+			length = other.length;
+		}
+		bufferLen = other.bufferLen;
+		memcpy(buffer, other.buffer, blockLen*sizeof(uint8_t));
+	}
+	return *this;
+}
+
 Sha3::Sha3(unsigned int len_) : KeccakBase(len_)
 {};
 
+Sha3::Sha3(const Sha3& other) : KeccakBase(other)
+{};
+
+Sha3& Sha3::operator=(const Sha3& other)
+{
+	KeccakBase::operator=(other);
+	return *this;
+}
+
 Keccak::Keccak(unsigned int len_) : KeccakBase(len_)
 {};
+
+Keccak::Keccak(const Keccak& other) : KeccakBase(other)
+{};
+
+Keccak& Keccak::operator=(const Keccak& other)
+{
+	KeccakBase::operator=(other);
+	return *this;
+}
 
 // Function to create the state structure for SHAKE application, of size length
 //   (where length is the number of bits in the hash) 
 Shake::Shake(unsigned int length_, unsigned int d_) : KeccakBase(length_)
 {
 	d = d_;
+}
+
+Shake::Shake(const Shake& other) : KeccakBase(other), d(other.d)
+{
+}
+
+Shake& Shake::operator=(const Shake& other)
+{
+	KeccakBase::operator=(other);
+	d = other.d;
+	return *this;
 }
 
 KeccakBase::~KeccakBase()
