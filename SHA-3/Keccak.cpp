@@ -150,7 +150,7 @@ void KeccakBase::addData(const uint8_t *input, unsigned int off, unsigned int le
 {
 	while (len > 0) 
 	{
-		int cpLen = 0;
+		unsigned int cpLen = 0;
 		if((blockLen - bufferLen) > len)
 		{
 			cpLen = len;
