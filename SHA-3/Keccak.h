@@ -15,8 +15,8 @@ public:
 	virtual void addPadding() = 0;
 	void reset();
 	void keccakf();
-	virtual void addData(uint8_t input);
-	virtual void addData(const uint8_t *input, unsigned int off, unsigned int len);
+	void addData(uint8_t input) override;
+	void addData(const uint8_t *input, unsigned int off, unsigned int len) override;
 	void processBuffer();
 protected:
 	uint64_t *A;
@@ -32,8 +32,8 @@ public:
 	Sha3(unsigned int len);
 	Sha3(const Sha3& other);
 	Sha3& operator=(const Sha3& other);
-	std::vector<unsigned char> digest();
-	void addPadding();
+	std::vector<unsigned char> digest() override;
+	void addPadding() override;
 private:
 };
 
@@ -43,8 +43,8 @@ public:
 	Keccak(unsigned int len);
 	Keccak(const Keccak& other);
 	Keccak& operator=(const Keccak& other);
-	std::vector<unsigned char> digest();
-	void addPadding();
+	std::vector<unsigned char> digest() override;
+	void addPadding() override;
 private:
 };
 
@@ -54,8 +54,8 @@ public:
 	Shake(unsigned int len, unsigned int d_);
 	Shake(const Shake& other);
 	Shake& operator=(const Shake& other);
-	std::vector<unsigned char> digest();
-	void addPadding();
+	std::vector<unsigned char> digest() override;
+	void addPadding() override;
 private:
 	unsigned int d;
 };
