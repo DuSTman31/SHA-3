@@ -1,7 +1,7 @@
 #ifndef PARSER_COMMON_H_
 #define PARSER_COMMON_H_
 
-// atoun - Version of atoi which takes a limited size buffer and returns an 
+// atoun - Version of atoi which takes a limited size buffer and returns an
 //   unsigned int
 inline unsigned int atoun(const char *buf, const unsigned int length)
 {

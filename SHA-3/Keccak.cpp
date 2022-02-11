@@ -101,7 +101,7 @@ Keccak& Keccak::operator=(const Keccak& other)
 }
 
 // Function to create the state structure for SHAKE application, of size length
-//   (where length is the number of bits in the hash) 
+//   (where length is the number of bits in the hash)
 Shake::Shake(unsigned int length_, unsigned int d_) : KeccakBase(length_)
 {
 	d = d_;
@@ -126,7 +126,7 @@ KeccakBase::~KeccakBase()
 
 void KeccakBase::reset()
 {
-	for(unsigned int i = 0 ; i<25 ; i++) 
+	for(unsigned int i = 0 ; i<25 ; i++)
 	{
 		A[i] = 0L;
 	}
@@ -139,7 +139,7 @@ void KeccakBase::reset()
 void KeccakBase::addData(uint8_t input)
 {
 	buffer[bufferLen] = input;
-	if(++(bufferLen) == blockLen) 
+	if(++(bufferLen) == blockLen)
 	{
 		processBuffer();
 	}
@@ -148,7 +148,7 @@ void KeccakBase::addData(uint8_t input)
 //  Process a larger buffer with varying amounts of data in it
 void KeccakBase::addData(const uint8_t *input, unsigned int off, unsigned int len)
 {
-	while (len > 0) 
+	while (len > 0)
 	{
 		unsigned int cpLen = 0;
 		if((blockLen - bufferLen) > len)
@@ -167,7 +167,7 @@ void KeccakBase::addData(const uint8_t *input, unsigned int off, unsigned int le
 		bufferLen += cpLen;
 		off += cpLen;
 		len -= cpLen;
-		if(bufferLen == blockLen) 
+		if(bufferLen == blockLen)
 		{
 			processBuffer();
 		}
@@ -215,7 +215,7 @@ std::vector<unsigned char> digest_generic(uint64_t *A, unsigned int hashLength, 
 //  returns the hash result in a char vector
 std::vector<unsigned char> Keccak::digest()
 {
-	return digest_generic(A, length, 
+	return digest_generic(A, length,
 		[this]() { addPadding(); },
 		[this]() { processBuffer(); },
 		[this]() { reset(); });
@@ -245,14 +245,14 @@ std::vector<unsigned char> Shake::digest()
 
 void Sha3::addPadding()
 {
-	if(bufferLen + 1 == blockLen) 
+	if(bufferLen + 1 == blockLen)
 	{
 		buffer[bufferLen] = (uint8_t) 0x86;
-	} 
-	else 
+	}
+	else
 	{
 		buffer[bufferLen] = (uint8_t) 0x06;
-		for(unsigned int i = bufferLen + 1 ; i < blockLen - 1 ; i++) 
+		for(unsigned int i = bufferLen + 1 ; i < blockLen - 1 ; i++)
 		{
 			buffer[i] = 0;
 		}
@@ -262,14 +262,14 @@ void Sha3::addPadding()
 
 void Keccak::addPadding()
 {
-	if(bufferLen + 1 == blockLen) 
+	if(bufferLen + 1 == blockLen)
 	{
 		buffer[bufferLen] = (uint8_t) 0x81;
-	} 
-	else 
+	}
+	else
 	{
 		buffer[bufferLen] = (uint8_t) 0x01;
-		for(unsigned int i = bufferLen + 1 ; i < blockLen - 1 ; i++) 
+		for(unsigned int i = bufferLen + 1 ; i < blockLen - 1 ; i++)
 		{
 			buffer[i] = 0;
 		}
@@ -297,7 +297,7 @@ void Shake::addPadding()
 
 void KeccakBase::processBuffer()
 {
-	for(unsigned int i = 0 ; i < blockLen/8 ; i++) 
+	for(unsigned int i = 0 ; i < blockLen/8 ; i++)
 	{
 		A[i] ^= LittleToNative(((uint64_t*)buffer)[i]);
 	}
@@ -314,14 +314,14 @@ struct keccakfState
 	uint64_t D[5];
 };
 
-// Hash function proper. 
+// Hash function proper.
 void KeccakBase::keccakf()
 {
 	uint64_t *A_ = A;
 	keccakfState kState;
 
 
-	for(int n = 0 ; n < 24 ; n++) 
+	for(int n = 0 ; n < 24 ; n++)
 	{
 		int x = 0;
 		kState.C[x] = A_[index(x, 0)] ^ A_[index(x, 1)] ^ A_[index(x, 2)] ^ A_[index(x, 3)] ^ A_[index(x, 4)];
@@ -348,7 +348,7 @@ void KeccakBase::keccakf()
 		A_[index(x, y)] ^= kState.D[x];
 		y = 4;
 		A_[index(x, y)] ^= kState.D[x];
-		x = 1; 
+		x = 1;
 		kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 		y = 0;
 		A_[index(x, y)] ^= kState.D[x];
@@ -360,7 +360,7 @@ void KeccakBase::keccakf()
 		A_[index(x, y)] ^= kState.D[x];
 		y = 4;
 		A_[index(x, y)] ^= kState.D[x];
-		x = 2; 
+		x = 2;
 		kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 		y = 0;
 		A_[index(x, y)] ^= kState.D[x];
@@ -372,7 +372,7 @@ void KeccakBase::keccakf()
 		A_[index(x, y)] ^= kState.D[x];
 		y = 4;
 		A_[index(x, y)] ^= kState.D[x];
-		x = 3; 
+		x = 3;
 		kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 		y = 0;
 		A_[index(x, y)] ^= kState.D[x];
@@ -384,7 +384,7 @@ void KeccakBase::keccakf()
 		A_[index(x, y)] ^= kState.D[x];
 		y = 4;
 		A_[index(x, y)] ^= kState.D[x];
-		x = 4; 
+		x = 4;
 		kState.D[x] = kState.C[index(x - 1)] ^ rotateLeft(kState.C[index(x + 1)], 1);
 		y = 0;
 		A_[index(x, y)] ^= kState.D[x];
@@ -429,7 +429,7 @@ void KeccakBase::keccakf()
 		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 4;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);				
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		x = 2;
 		y = 0;
 		i = index(x, y);
@@ -445,7 +445,7 @@ void KeccakBase::keccakf()
 		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 4;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);			
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		x = 3;
 		y = 0;
 		i = index(x, y);
@@ -461,7 +461,7 @@ void KeccakBase::keccakf()
 		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 4;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);			
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		x = 4;
 		y = 0;
 		i = index(x, y);
@@ -477,8 +477,8 @@ void KeccakBase::keccakf()
 		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
 		y = 4;
 		i = index(x, y);
-		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);			
-				
+		kState.B[index(y, x * 2 + 3 * y)] = rotateLeft(A_[i], R[i]);
+
 		x = 0;
 		y = 0;
 		i = index(x, y);
@@ -559,7 +559,7 @@ void KeccakBase::keccakf()
 		y = 4;
 		i = index(x, y);
 		A_[i] = kState.B[i] ^ (~kState.B[index(x + 1, y)] & kState.B[index(x + 2, y)]);
-		
+
 		A_[0] ^= RC[n];
 	}
 }

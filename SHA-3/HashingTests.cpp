@@ -1,7 +1,7 @@
 // Hashing Tests.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 // #define BOOST_TEST_MODULE MyTest
-#include <boost/test/unit_test.hpp> 
+#include <boost/test/unit_test.hpp>
 #include "stdafx.h"
 #include "Keccak.h" // project being tested
 #include "Hex.h"
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(my_boost_test)
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu
 
-// Tips for Getting Started: 
+// Tips for Getting Started:
 //   1. Use the Solution Explorer window to add/manage files
 //   2. Use the Team Explorer window to connect to source control
 //   3. Use the Output window to see build output and other messages
