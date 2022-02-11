@@ -1,8 +1,8 @@
 // KeccakTests.cpp
 //
 #define BOOST_TEST_MODULE SHA3Tests
-#include <boost/test/included/unit_test.hpp> 
-#include "../SHA-3/Keccak.h" 
+#include <boost/test/included/unit_test.hpp>
+#include "../SHA-3/Keccak.h"
 #include "../SHA-3/Keccak.cpp"
 #include "../SHA-3/Hex.h"
 #include "../SHA-3/HashFunction.h"

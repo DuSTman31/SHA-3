@@ -10,7 +10,7 @@ class FileHandleWrapper
 {
 public:
 	FileHandleWrapper(FILE *fh) : fHand(fh) {};
-	~FileHandleWrapper() 
+	~FileHandleWrapper()
 	{
 		fclose(fHand);
 	};
@@ -19,7 +19,7 @@ private:
 };
 
 
-// Array wrapper - simple wrapper to RAII-ise a 
+// Array wrapper - simple wrapper to RAII-ise a
 //  array allocation.
 //  Considered using std::array, but it seems to
 //  want the array size to be set at compile time.
@@ -31,7 +31,7 @@ public:
 	{
 		data = new T1[s];
 	}
-	~ArrayWrapper() 
+	~ArrayWrapper()
 	{
 		delete[] data;
 	}

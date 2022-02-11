@@ -2,7 +2,7 @@
 #define ENDIAN_H_
 
 // Endianness conversion inlines - These will be optimised out on platforms where
-//  it's not necessary, and will collapse to only the swapping code on 
+//  it's not necessary, and will collapse to only the swapping code on
 //  other big endian platforms.
 
 inline bool littleEndian()

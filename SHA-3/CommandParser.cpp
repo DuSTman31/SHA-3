@@ -16,7 +16,7 @@ unsigned int bufferSize = 1024 * 4;
 
 
 template<typename F>
-int readFileIntoFunc(const char *fileName, F f) 
+int readFileIntoFunc(const char *fileName, F f)
 {
 	FILE *fHand = fopen(fileName, "rb");
 	if (!fHand)
@@ -64,7 +64,7 @@ int hashFile(const char *fileName, const std::string &hashName, F1 &hashObj, Out
 		}
 		std::cout << b.str();
 	}
-	else 
+	else
 	{
 		std::string dest;
 		size_t len = op.size();
@@ -114,13 +114,13 @@ void usage()
 	" where command is an optional parameter that can set either the algorithm, as\n"
 	" there is a slight difference between the bare keccak function and the SHA-3\n"
 	" variant.\n"
-	"\n" 
+	"\n"
 	" Algorithm \n"
-	"\n" 
+	"\n"
 	" -a=s   :  Set algorithm to SHA-3 (default).\n"
 	" -a=k   :  Set algotithm to Keccak.\n"
 	" -a=h   :  Set algotithm to SHAKE.\n"
-	"\n" 
+	"\n"
 	" Size\n"
 	" \n"
 	" -w=224 :  Set width to 224 bits.\n"
@@ -204,7 +204,7 @@ int parseWidth(const char *param, const unsigned int pSize, options &opt)
 		else if(strncmp(&param[index], "256", pSize-index)==0)
 		{
 			opt.hashWidth = 256;
-			return 1;	
+			return 1;
 		}
 		else if(strncmp(&param[index], "384", pSize-index)==0)
 		{
@@ -317,7 +317,7 @@ int parseOption(const char *param, const unsigned int pSize, options &opt)
 		}
 		else if(commandInitial == 'a')
 		{
-			return parseAlg(&param[index+1], pSize-(index+1), opt);	
+			return parseAlg(&param[index+1], pSize-(index+1), opt);
 		}
 		else if(commandInitial == 'w')
 		{
@@ -334,10 +334,10 @@ int parseOption(const char *param, const unsigned int pSize, options &opt)
 		else
 		{
 			std::cerr << "Error - Unrecognised option " << param << "\n";
-			return 0;	
+			return 0;
 		}
 	}
-	else 
+	else
 	{
 		std::cerr << "Error - malformed option.\n";
 		return 0;
@@ -370,7 +370,7 @@ void parseParameter(const char *param, options &opt)
 		}
 		else
 		{
-			parseOption(&param[index], paramSize-index, opt);	
+			parseOption(&param[index], paramSize-index, opt);
 		}
 	}
 }
@@ -390,7 +390,7 @@ void parseCommandLine(const int argc, char* argv[])
 		for(unsigned int i = 1 ; i != argc ; i++)
 		{
 			parseParameter(argv[i], opt);
-		}	
+		}
 	}
 }
 
